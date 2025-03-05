@@ -1,6 +1,7 @@
 package Back.bailAutoComplet.BailAutoComplet.Dto;
 
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
+import Back.bailAutoComplet.BailAutoComplet.model.Chambre;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -8,25 +9,25 @@ import java.util.stream.Collectors;
 
 public class AppartementDto {
     private Long id;
-    private String nom;
-    private String adresse;
-    private List<String> chambres;
+    private String name;
+    private String adress;
+    private List<Chambre> chambres;
     private List<CaracteristiqueDto> caracteristiques; // Utilise CaracteristiqueDTO
     private String typeChauffage;
     private Boolean chauffageCollectif;
-    private String informationsBancaires;
+    private String bankName;
     private String restrictions;
-    private String anneeConstruction;
-    private BigDecimal superficie;
+    private String constructionPeriod;
+    private BigDecimal surface;
     private BigDecimal charges;
     private BigDecimal loyers;
     private BigDecimal caution;
 
     // Constructeur prenant un objet Appartement comme source
-    public void AppartementDTO(Appartement appartement) {
+    public AppartementDto(Appartement appartement) {
         this.id = appartement.getId();
-        this.nom = appartement.getNom();
-        this.adresse = appartement.getAdresse();
+        this.name = appartement.getName();
+        this.adress = appartement.getAdresse();
         this.chambres = appartement.getChambres();
         this.caracteristiques = appartement.getCaracteristiques()
                 .stream()
@@ -34,10 +35,10 @@ public class AppartementDto {
                 .collect(Collectors.toList());
         this.typeChauffage = appartement.getTypeChauffage();
         this.chauffageCollectif = appartement.getChauffageCollectif();
-        this.informationsBancaires = appartement.getInformationsBancaires();
+        this.bankName = appartement.getBankName();
         this.restrictions = appartement.getRestrictions();
-        this.anneeConstruction = appartement.getAnneeConstruction();
-        this.superficie = appartement.getSuperficie();
+        this.constructionPeriod = appartement.getConstructionPeriod();
+        this.surface = appartement.getSurface();
         this.charges = appartement.getCharges();
         this.loyers = appartement.getLoyers();
         this.caution = appartement.getCaution();
@@ -48,15 +49,15 @@ public class AppartementDto {
         return id;
     }
 
-    public String getNom() {
-        return nom;
+    public String getName() {
+        return name;
     }
 
-    public String getAdresse() {
-        return adresse;
+    public String getAdress() {
+        return adress;
     }
 
-    public List<String> getChambres() {
+    public List<Chambre> getChambres() {
         return chambres;
     }
 
@@ -72,20 +73,20 @@ public class AppartementDto {
         return chauffageCollectif;
     }
 
-    public String getInformationsBancaires() {
-        return informationsBancaires;
+    public String getBankName() {
+        return bankName;
     }
 
     public String getRestrictions() {
         return restrictions;
     }
 
-    public String getAnneeConstruction() {
-        return anneeConstruction;
+    public String getConstructionPeriod() {
+        return constructionPeriod;
     }
 
     public BigDecimal getSuperficie() {
-        return superficie;
+        return surface;
     }
 
     public BigDecimal getCharges() {

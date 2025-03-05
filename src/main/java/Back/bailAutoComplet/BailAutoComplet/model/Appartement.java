@@ -14,17 +14,18 @@ public class Appartement {
     private Long id;
 
     @Column(nullable = false)
-    private String nom;
+    private String name;
 
     @ManyToOne()
     @JoinColumn(name = "bailleur_id", nullable = false)
     private Bailleur bailleur;
 
     @Column(nullable = false)
-    private String adresse;
+    private String adress;
 
+    @OneToMany(mappedBy = "appartement", cascade = CascadeType.ALL, orphanRemoval = true)
     @Column(name = "chambre")
-    private List<String> chambres;
+    private List<Chambre> chambres;
 
     @OneToMany(mappedBy = "appartement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Caracteristique> caracteristiques;
@@ -35,17 +36,17 @@ public class Appartement {
     @Column(name = "chauffage_collectif", nullable = false)
     private Boolean chauffageCollectif;
 
-    @Column(name = "informations_bancaires", columnDefinition = "TEXT")
-    private String informationsBancaires;
+    @Column(name = "bank_name", columnDefinition = "TEXT")
+    private String bankName;
 
     @Column(columnDefinition = "TEXT")
     private String restrictions;
 
-    @Column(name = "annee_construction")
-    private String anneeConstruction;
+    @Column(name = "construction_period")
+    private String constructionPeriod;
 
-    @Column(name = "superficie")
-    private BigDecimal superficie;
+    @Column(name = "surface")
+    private BigDecimal surface;
 
     @Column(name = "charges")
     private BigDecimal charges;
@@ -61,32 +62,32 @@ public class Appartement {
     }
 
     public Appartement(
-            String nom,
+            String name,
             Bailleur bailleur,
-            String adresse,
-            List<String> chambres,
+            String adress,
+            List<Chambre> chambres,
             List<Caracteristique> caracteristiques,
             String typeChauffage,
             Boolean chauffageCollectif,
-            String informationsBancaires,
+            String bankName,
             String restrictions,
-            String anneeConstruction,
+            String constructionPeriod,
             BigDecimal superficie,
             BigDecimal charges,
             BigDecimal loyers,
             BigDecimal caution
     ) {
-        this.nom = nom;
+        this.name = name;
         this.bailleur = bailleur;
-        this.adresse = adresse;
+        this.adress = adress;
         this.chambres = chambres;
         this.caracteristiques = caracteristiques;
         this.typeChauffage = typeChauffage;
         this.chauffageCollectif = chauffageCollectif;
-        this.informationsBancaires = informationsBancaires;
+        this.bankName = bankName;
         this.restrictions = restrictions;
-        this.anneeConstruction = anneeConstruction;
-        this.superficie = superficie;
+        this.constructionPeriod = constructionPeriod;
+        this.surface = surface;
         this.charges = charges;
         this.loyers = loyers;
         this.caution = caution;
@@ -101,12 +102,12 @@ public class Appartement {
         this.id = id;
     }
 
-    public String getNom() {
-        return nom;
+    public String getName() {
+        return name;
     }
 
     public void setNom(String nom) {
-        this.nom = nom;
+        this.name = name;
     }
 
     public Bailleur getBailleur() {
@@ -118,18 +119,18 @@ public class Appartement {
     }
 
     public String getAdresse() {
-        return adresse;
+        return adress;
     }
 
     public void setAdresse(String adresse) {
-        this.adresse = adresse;
+        this.adress = adress;
     }
 
-    public List<String> getChambres() {
+    public List<Chambre> getChambres() {
         return chambres;
     }
 
-    public void setChambres(List<String> chambres) {
+    public void setChambres(List<Chambre> chambres) {
         this.chambres = chambres;
     }
 
@@ -157,12 +158,12 @@ public class Appartement {
         this.chauffageCollectif = chauffageCollectif;
     }
 
-    public String getInformationsBancaires() {
-        return informationsBancaires;
+    public String getBankName() {
+        return bankName;
     }
 
-    public void setInformationsBancaires(String informationsBancaires) {
-        this.informationsBancaires = informationsBancaires;
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
     public String getRestrictions() {
@@ -173,20 +174,20 @@ public class Appartement {
         this.restrictions = restrictions;
     }
 
-    public String getAnneeConstruction() {
-        return anneeConstruction;
+    public String getConstructionPeriod() {
+        return constructionPeriod;
     }
 
     public void setAnneeConstruction(String anneeConstruction) {
-        this.anneeConstruction = anneeConstruction;
+        this.constructionPeriod = anneeConstruction;
     }
 
-    public BigDecimal getSuperficie() {
-        return superficie;
+    public BigDecimal getSurface() {
+        return surface;
     }
 
-    public void setSuperficie(BigDecimal superficie) {
-        this.superficie = superficie;
+    public void setSurface(BigDecimal superficie) {
+        this.surface = surface;
     }
 
     public BigDecimal getCharges() {
@@ -217,16 +218,16 @@ public class Appartement {
     public String toString() {
         return "Appartement{" +
                 "id=" + id +
-                ", nom='" + nom + '\'' +
-                ", adresse='" + adresse + '\'' +
+                ", nom='" + name + '\'' +
+                ", adresse='" + adress + '\'' +
                 ", chambres=" + chambres +
                 ", caracteristiques=" + caracteristiques +
                 ", typeChauffage='" + typeChauffage + '\'' +
                 ", chauffageCollectif=" + chauffageCollectif +
-                ", informationsBancaires='" + informationsBancaires + '\'' +
+                ", bankName='" + bankName + '\'' +
                 ", restrictions='" + restrictions + '\'' +
-                ", anneeConstruction='" + anneeConstruction + '\'' +
-                ", superficie=" + superficie +
+                ", constructionPeriod='" + constructionPeriod + '\'' +
+                ", surface=" + surface +
                 ", charges=" + charges +
                 ", loyers=" + loyers +
                 ", caution=" + caution +
