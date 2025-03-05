@@ -11,7 +11,7 @@ import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
 
 
 @RestController
-@RequestMapping("/bailleurs")
+@RequestMapping("/bailleur")
 public class BailleurController {
 
     @Autowired
