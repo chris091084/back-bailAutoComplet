@@ -11,15 +11,15 @@ public class Bailleur {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    private String nom;
-    private String adresse;
+    private String name;
+    private String adress;
     private String email;
     private String telephone;
 
 
     public void Bailleur(String nom, String adresse, String email, String telephone) {
-        this.nom = nom;
-        this.adresse = adresse;
+        this.name = nom;
+        this.adress = adresse;
         this.email = email;
         this.telephone = telephone;
     }
@@ -27,18 +27,18 @@ public class Bailleur {
     public Long getId() {
         return id;
     }
-    public String getNom() {
-        return nom;
+    public String getName() {
+        return name;
     }
-    public void setNom(String nom) {
-        this.nom = nom;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getAdresse() {
-        return adresse;
+    public String getAdress() {
+        return adress;
     }
-    public void setAdresse(String adresse) {
-        this.adresse = adresse;
+    public void setAdress(String adresse) {
+        this.adress = adress;
     }
 
     public String getEmail() {

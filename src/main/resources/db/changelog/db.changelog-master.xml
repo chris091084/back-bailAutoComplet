@@ -6,6 +6,8 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <!-- Inclure d'autres fichiers de migration -->
-    <include file="db/changelog/changelog-1.xml"/>
-
+    <include file="db/changelog/changelog-1-bailleur.xml"/>
+    <include file="db/changelog/changelog-2-appartement.xml"/>
+    <include file="db/changelog/changelog-3-chambre.xml"/>
+    <include file="db/changelog/changelog-4-caracteristique.xml"/>
 </databaseChangeLog>
