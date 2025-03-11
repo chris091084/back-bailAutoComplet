@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="7" author="christian">
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 1 : 10.30 m²"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 2 : 9.14 m²"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 3 : 9.79 m²"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 4 : 11.19 m²"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
