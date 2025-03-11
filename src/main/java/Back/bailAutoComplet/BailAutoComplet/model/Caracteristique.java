@@ -2,7 +2,7 @@ package Back.bailAutoComplet.BailAutoComplet.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "caracteristiques")
+@Table(name = "caracteristique")
 public class Caracteristique {
 
     @Id

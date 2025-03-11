@@ -5,9 +5,12 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <!-- Inclure d'autres fichiers de migration -->
     <include file="db/changelog/changelog-1-bailleur.xml"/>
     <include file="db/changelog/changelog-2-appartement.xml"/>
     <include file="db/changelog/changelog-3-chambre.xml"/>
     <include file="db/changelog/changelog-4-caracteristique.xml"/>
+    <include file="db/changelog/changelog-5-set-bailleur.xml"/>
+    <include file="db/changelog/changelog-6-set-appartement.xml"/>
+    <include file="db/changelog/changelog-7-set-chambre.xml"/>
+    <include file="db/changelog/changelog-8-set-caracteristique.xml"/>
 </databaseChangeLog>
