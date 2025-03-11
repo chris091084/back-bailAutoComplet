@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+<changeSet id="5" author="christian">
+    <insert tableName="bailleur">
+        <column name="name" value="M. BODIN Sylvain"/>
+        <column name="adress" value="118 chemin du Bassard  -  38121 CHONAS l’AMBALLAN"/>
+        <column name="email" value="sylvain.bodin@gmail.com"/>
+        <column name="telephone" value="06 13 88 31 01"/>
+    </insert>
+    <insert tableName="bailleur">
+        <column name="name" value="M. BODIN Sylvain et M. COLEY Christian"/>
+        <column name="adress" value="118 chemin du Bassard  -  38121 CHONAS l’AMBALLAN"/>
+        <column name="email" value="sylvain.bodin@gmail.com / christian.coley@hotmail.fr"/>
+        <column name="telephone" value="06 13 88 31 01 / 06 50 27 92 53"/>
+    </insert>
+</changeSet>
+</databaseChangeLog>
