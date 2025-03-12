@@ -11,7 +11,7 @@ public class AppartementDto {
     private Long id;
     private String name;
     private String adress;
-    private List<Chambre> chambres;
+    private List<ChambreDto> chambres;
     private List<CaracteristiqueDto> caracteristiques; // Utilise CaracteristiqueDTO
     private String typeChauffage;
     private Boolean chauffageCollectif;
@@ -27,8 +27,8 @@ public class AppartementDto {
     public AppartementDto(Appartement appartement) {
         this.id = appartement.getId();
         this.name = appartement.getName();
-        this.adress = appartement.getAdresse();
-        this.chambres = appartement.getChambres();
+        this.adress = appartement.getAdress();
+        this.chambres = appartement.getChambres().stream().map(ChambreDto::new).collect(Collectors.toList());
         this.caracteristiques = appartement.getCaracteristiques()
                 .stream()
                 .map(CaracteristiqueDto::new) // Transforme Caracteristique en CaracteristiqueDTO
@@ -57,7 +57,7 @@ public class AppartementDto {
         return adress;
     }
 
-    public List<Chambre> getChambres() {
+    public List<ChambreDto> getChambres() {
         return chambres;
     }
 
