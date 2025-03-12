@@ -28,6 +28,7 @@ public class AppartementService {
             throw new ResourceExceptionNoFound("pas d'appartement disponible");
         }
 
+
        return appartements.stream()
                .map(AppartementDto::new)
                .collect(Collectors.toList());
