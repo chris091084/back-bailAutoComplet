@@ -72,7 +72,7 @@ public class Appartement {
             String bankName,
             String restrictions,
             String constructionPeriod,
-            BigDecimal superficie,
+            BigDecimal surface,
             BigDecimal charges,
             BigDecimal loyers,
             BigDecimal caution
@@ -118,11 +118,11 @@ public class Appartement {
         this.bailleur = bailleur;
     }
 
-    public String getAdresse() {
+    public String getAdress() {
         return adress;
     }
 
-    public void setAdresse(String adresse) {
+    public void setAdress(String adress) {
         this.adress = adress;
     }
 
@@ -212,25 +212,5 @@ public class Appartement {
 
     public void setCaution(BigDecimal caution) {
         this.caution = caution;
-    }
-
-    @Override
-    public String toString() {
-        return "Appartement{" +
-                "id=" + id +
-                ", nom='" + name + '\'' +
-                ", adresse='" + adress + '\'' +
-                ", chambres=" + chambres +
-                ", caracteristiques=" + caracteristiques +
-                ", typeChauffage='" + typeChauffage + '\'' +
-                ", chauffageCollectif=" + chauffageCollectif +
-                ", bankName='" + bankName + '\'' +
-                ", restrictions='" + restrictions + '\'' +
-                ", constructionPeriod='" + constructionPeriod + '\'' +
-                ", surface=" + surface +
-                ", charges=" + charges +
-                ", loyers=" + loyers +
-                ", caution=" + caution +
-                '}';
     }
 }

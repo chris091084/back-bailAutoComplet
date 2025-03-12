@@ -15,9 +15,13 @@ public class Chambre {
     @JoinColumn(name = "appartement_id", nullable = false)
     private Appartement appartement;
 
+
+    public Chambre() {
+    }
+
     // Constructeurs
-    public Chambre(String description, Appartement appartement) {
-        this.piece = description;
+    public Chambre(String piece, Appartement appartement) {
+        this.piece = piece;
         this.appartement = appartement;
     }
 
@@ -44,13 +48,5 @@ public class Chambre {
 
     public void setAppartement(Appartement appartement) {
         this.appartement = appartement;
-    }
-
-    @Override
-    public String toString() {
-        return "Chambre{" +
-                "id=" + id +
-                ", piece='" + piece + '\'' +
-                '}';
     }
 }
