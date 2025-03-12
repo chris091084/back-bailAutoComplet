@@ -19,6 +19,7 @@ public class AppartementService {
     public List<AppartementDto> getAllAppartement() {
         List<Appartement> appartements = appartementRepository.findAll();
 
+
        return appartements.stream()
                .map(AppartementDto::new)  // Convertit chaque Appartement en AppartementDTO
                .collect(Collectors.toList());
