@@ -2,6 +2,7 @@ package Back.bailAutoComplet.BailAutoComplet.Dto;
 
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
 import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
+import Back.bailAutoComplet.BailAutoComplet.model.Caracteristique;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +14,7 @@ public class AppartementDto {
     private String adress;
     private Bailleur bailleur;
     private List<ChambreDto> chambres;
-    private List<CaracteristiqueDto> caracteristiques; // Utilise CaracteristiqueDTO
+    private List<String> caracteristiques; // Utilise CaracteristiqueDTO
     private String typeChauffage;
     private Boolean chauffageCollectif;
     private String bankName;
@@ -33,8 +34,7 @@ public class AppartementDto {
         this.chambres = appartement.getChambres().stream().map(ChambreDto::new).collect(Collectors.toList());
         this.caracteristiques = appartement.getCaracteristiques()
                 .stream()
-                .map(CaracteristiqueDto::new) // Transforme Caracteristique en CaracteristiqueDTO
-                .collect(Collectors.toList());
+                .map(Caracteristique::getDescription).collect(Collectors.toList());
         this.typeChauffage = appartement.getTypeChauffage();
         this.chauffageCollectif = appartement.getChauffageCollectif();
         this.bankName = appartement.getBankName();
@@ -65,7 +65,7 @@ public class AppartementDto {
         return chambres;
     }
 
-    public List<CaracteristiqueDto> getCaracteristiques() {
+    public List<String> getCaracteristiques() {
         return caracteristiques;
     }
 
