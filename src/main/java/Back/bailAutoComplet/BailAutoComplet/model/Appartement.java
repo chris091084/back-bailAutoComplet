@@ -57,9 +57,15 @@ public class Appartement {
     @Column(name = "caution")
     private BigDecimal caution;
 
-    // Constructeurs
-    public Appartement() {
-    }
+    @Column(name = "pet_rule")
+    private String petRule;
+
+    @Column(name = "rent_ref")
+    private BigDecimal rentRef;
+
+    @Column(name = "rent_ref_maj")
+    private BigDecimal rentRefMaj;
+
 
     public Appartement(
             String name,
@@ -75,7 +81,11 @@ public class Appartement {
             BigDecimal surface,
             BigDecimal charges,
             BigDecimal loyers,
-            BigDecimal caution
+            BigDecimal caution,
+            String petRule,
+            BigDecimal rentRef,
+            BigDecimal rentRefMaj
+
     ) {
         this.name = name;
         this.bailleur = bailleur;
@@ -91,6 +101,9 @@ public class Appartement {
         this.charges = charges;
         this.loyers = loyers;
         this.caution = caution;
+        this.rentRef = rentRef;
+        this.rentRefMaj = rentRefMaj;
+        this.petRule = petRule;
     }
 
     // Getters et Setters
@@ -212,5 +225,29 @@ public class Appartement {
 
     public void setCaution(BigDecimal caution) {
         this.caution = caution;
+    }
+
+    public String getPetRule() {
+        return petRule;
+    }
+
+    public void setPetRule(String petRule) {
+        this.petRule = petRule;
+    }
+
+    public BigDecimal getRentRef() {
+        return rentRef;
+    }
+
+    public void setRentRef(BigDecimal rentRef) {
+        this.rentRef = rentRef;
+    }
+
+    public BigDecimal getRentRefMaj() {
+        return rentRefMaj;
+    }
+
+    public void setRentRefMaj(BigDecimal rentRefMaj) {
+        this.rentRefMaj = rentRefMaj;
     }
 }

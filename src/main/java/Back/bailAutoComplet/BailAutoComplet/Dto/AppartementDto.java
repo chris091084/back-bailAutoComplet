@@ -3,6 +3,7 @@ package Back.bailAutoComplet.BailAutoComplet.Dto;
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
 import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
 import Back.bailAutoComplet.BailAutoComplet.model.Caracteristique;
+import jakarta.persistence.Column;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,6 +25,10 @@ public class AppartementDto {
     private BigDecimal charges;
     private BigDecimal loyers;
     private BigDecimal caution;
+    private String petRule;
+    private BigDecimal rentRef;
+    private BigDecimal rentRefMaj;
+
 
     // Constructeur prenant un objet Appartement comme source
     public AppartementDto(Appartement appartement) {
@@ -44,6 +49,10 @@ public class AppartementDto {
         this.charges = appartement.getCharges();
         this.loyers = appartement.getLoyers();
         this.caution = appartement.getCaution();
+        this.petRule = appartement.getPetRule();
+        this.rentRef = appartement.getRentRef();
+        this.rentRefMaj = appartement.getRentRefMaj();
+
     }
 
     // Getters
@@ -103,5 +112,17 @@ public class AppartementDto {
 
     public BigDecimal getCaution() {
         return caution;
+    }
+
+    public String getPetRule() {
+        return petRule;
+    }
+
+    public BigDecimal getRentRef() {
+        return rentRef;
+    }
+
+    public BigDecimal getRentRefMaj() {
+        return rentRefMaj;
     }
 }
