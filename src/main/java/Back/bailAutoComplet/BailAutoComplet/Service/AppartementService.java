@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,10 @@ public class AppartementService {
             throw new ResourceExceptionNoFound("pas d'appartement disponible");
         }
 
+        if(appartements.isEmpty())
+        {
+            throw new ResourceExceptionNoFound("pas d'appartement disponible");
+        }
 
        return appartements.stream()
                .map(AppartementDto::new)
