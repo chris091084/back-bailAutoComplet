@@ -1,15 +1,15 @@
 package Back.bailAutoComplet.BailAutoComplet.Controller;
 
 import Back.bailAutoComplet.BailAutoComplet.Dto.AppartementDto;
+import Back.bailAutoComplet.BailAutoComplet.Dto.RentRefDto;
 import Back.bailAutoComplet.BailAutoComplet.Service.AppartementService;
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
 import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
+import jakarta.persistence.PostUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -22,5 +22,10 @@ public class AppartementController {
     @GetMapping
     public List<AppartementDto> getAllAppartement() {
         return appartementService.getAllAppartement();
+    }
+
+    @PostMapping("/updateRent")
+    public AppartementDto postRentRefAndRentRefMaj(@RequestBody RentRefDto rentRefDto) {
+        return appartementService.setRentRefAndRentRefMaj(rentRefDto);
     }
 }
