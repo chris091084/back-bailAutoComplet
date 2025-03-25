@@ -66,6 +66,8 @@ public class Appartement {
     @Column(name = "rent_ref_maj")
     private BigDecimal rentRefMaj;
 
+    public Appartement() {
+    }
 
     public Appartement(
             String name,

@@ -2,11 +2,15 @@ package Back.bailAutoComplet.BailAutoComplet.Service;
 
 
 import Back.bailAutoComplet.BailAutoComplet.Dto.AppartementDto;
+import Back.bailAutoComplet.BailAutoComplet.Dto.RentRefDto;
 import Back.bailAutoComplet.BailAutoComplet.Repository.AppartementRepository;
+import Back.bailAutoComplet.BailAutoComplet.exceptions.ResourceExceptionNoFound;
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,11 +23,33 @@ public class AppartementService {
     public List<AppartementDto> getAllAppartement() {
         List<Appartement> appartements = appartementRepository.findAll();
 
+        if(appartements.isEmpty())
+        {
+            throw new ResourceExceptionNoFound("pas d'appartement disponible");
+        }
 
        return appartements.stream()
-               .map(AppartementDto::new)  // Convertit chaque Appartement en AppartementDTO
+               .map(AppartementDto::new)
                .collect(Collectors.toList());
     }
 
+    public AppartementDto setRentRefAndRentRefMaj(RentRefDto rentRefDto ){
+try {
+    Appartement appartement = appartementRepository.getReferenceById(rentRefDto.getId());
+    if (rentRefDto.getRentRef() != null) {
+        appartement.setRentRef(rentRefDto.getRentRef());
+    }
+    if (rentRefDto.getRentRefMaj() != null) {
+        appartement.setRentRefMaj(rentRefDto.getRentRefMaj());
+    }
+
+    Appartement updatedAppartement = appartementRepository.save(appartement);
+
+    return new AppartementDto(updatedAppartement);
+}catch (EntityNotFoundException e){
+
+     throw new ResourceExceptionNoFound("L'appartement avec l'id " + rentRefDto.getId() + " n'a pas été trouvé.", e);
+}
+    }
 }
 
