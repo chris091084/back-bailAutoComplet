@@ -16,7 +16,8 @@ public class AppartementDto {
     private Bailleur bailleur;
     private List<ChambreDto> chambres;
     private List<String> caracteristiques; // Utilise CaracteristiqueDTO
-    private String typeChauffage;
+    private String energieHeating;
+    private String energieWater;
     private Boolean chauffageCollectif;
     private String bankName;
     private String restrictions;
@@ -29,7 +30,6 @@ public class AppartementDto {
     private BigDecimal rentRef;
     private BigDecimal rentRefMaj;
 
-
     // Constructeur prenant un objet Appartement comme source
     public AppartementDto(Appartement appartement) {
         this.id = appartement.getId();
@@ -40,7 +40,8 @@ public class AppartementDto {
         this.caracteristiques = appartement.getCaracteristiques()
                 .stream()
                 .map(Caracteristique::getDescription).collect(Collectors.toList());
-        this.typeChauffage = appartement.getTypeChauffage();
+        this.energieHeating = appartement.getEnergieHeating();
+        this.energieWater = appartement.getEnergieWater();
         this.chauffageCollectif = appartement.getChauffageCollectif();
         this.bankName = appartement.getBankName();
         this.restrictions = appartement.getRestrictions();
@@ -78,8 +79,12 @@ public class AppartementDto {
         return caracteristiques;
     }
 
-    public String getTypeChauffage() {
-        return typeChauffage;
+    public String getEnergieHeating() {
+        return energieHeating;
+    }
+
+    public String getEnergieWater() {
+        return energieWater;
     }
 
     public Boolean getChauffageCollectif() {

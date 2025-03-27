@@ -30,8 +30,11 @@ public class Appartement {
     @OneToMany(mappedBy = "appartement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Caracteristique> caracteristiques;
 
-    @Column(name = "type_chauffage", nullable = false)
-    private String typeChauffage;
+    @Column(name = "energieHeating", nullable = false)
+    private String energieHeating;
+
+    @Column(name = "energieWater", nullable = false)
+    private String energieWater;
 
     @Column(name = "chauffage_collectif", nullable = false)
     private Boolean chauffageCollectif;
@@ -75,7 +78,8 @@ public class Appartement {
             String adress,
             List<Chambre> chambres,
             List<Caracteristique> caracteristiques,
-            String typeChauffage,
+            String energieHeating,
+            String energieWater,
             Boolean chauffageCollectif,
             String bankName,
             String restrictions,
@@ -94,7 +98,8 @@ public class Appartement {
         this.adress = adress;
         this.chambres = chambres;
         this.caracteristiques = caracteristiques;
-        this.typeChauffage = typeChauffage;
+        this.energieHeating = energieHeating;
+        this.energieWater = energieWater;
         this.chauffageCollectif = chauffageCollectif;
         this.bankName = bankName;
         this.restrictions = restrictions;
@@ -157,12 +162,20 @@ public class Appartement {
         this.caracteristiques = caracteristiques;
     }
 
-    public String getTypeChauffage() {
-        return typeChauffage;
+    public String getEnergieHeating() {
+        return energieHeating;
     }
 
-    public void setTypeChauffage(String typeChauffage) {
-        this.typeChauffage = typeChauffage;
+    public void setEnergieHeating(String energieHeating) {
+        this.energieHeating = energieHeating;
+    }
+
+    public String getEnergieWater() {
+        return energieWater;
+    }
+
+    public void setEnergieWater(String energieWater) {
+        this.energieWater = energieWater;
     }
 
     public Boolean getChauffageCollectif() {

@@ -15,4 +15,6 @@
     <include file="db/changelog/changelog-8-set-caracteristique.xml"/>
     <include file="db/changelog/changelog-9-upd-appartement.xml"/>
     <include file="db/changelog/changelog-10-set-petRule-in-appartement.xml"/>
+    <include file="db/changelog/changelog-11-upd-rename-colonne-and-add-colonne.xml"/>
+    <include file="db/changelog/changelog-12-set-col-energieWater.xml"/>
 </databaseChangeLog>
