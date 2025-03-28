@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+import java.util.List;
+
 public interface AppartementRepository extends JpaRepository<Appartement,Long> {
     List<Appartement> findAllByOrderByIdAsc();
 
