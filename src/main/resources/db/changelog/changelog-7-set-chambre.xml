@@ -36,7 +36,7 @@
         </insert>
         <insert tableName="chambre">
             <column name="piece" value="Chambre 4 : 10.5 m²"/>
-            <column name="appartement_id" valueNumeric="3"/>
+            <column name="appartement_id" valueNumeric="2"/>
         </insert>
         <insert tableName="chambre">
             <column name="piece" value="Chambre 1 : 10.13 m²"/>

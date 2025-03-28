@@ -214,7 +214,7 @@ public class Appartement {
         return surface;
     }
 
-    public void setSurface(BigDecimal superficie) {
+    public void setSurface(BigDecimal surface) {
         this.surface = surface;
     }
 
