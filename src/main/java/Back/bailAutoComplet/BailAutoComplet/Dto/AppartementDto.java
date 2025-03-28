@@ -103,7 +103,7 @@ public class AppartementDto {
         return constructionPeriod;
     }
 
-    public BigDecimal getSuperficie() {
+    public BigDecimal getSurface() {
         return surface;
     }
 
