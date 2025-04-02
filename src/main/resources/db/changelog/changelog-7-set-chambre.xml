@@ -23,35 +23,35 @@
             <column name="appartement_id" valueNumeric="1"/>
         </insert>   
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 1 : 9.91 m²"/>
+            <column name="piece" value="Chambre 1 : 10.35 m²"/>
             <column name="appartement_id" valueNumeric="2"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 2 : 8.20 m²"/>
+            <column name="piece" value="Chambre 2 : 8.68 m²"/>
             <column name="appartement_id" valueNumeric="2"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 3 : 9.67 m²"/>
+            <column name="piece" value="Chambre 3 : 10.39 m²"/>
             <column name="appartement_id" valueNumeric="2"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 4 : 10.5 m²"/>
+            <column name="piece" value="Chambre 4 : 10.9 m²"/>
             <column name="appartement_id" valueNumeric="2"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 1 : 10.13 m²"/>
+            <column name="piece" value="Chambre 1 : 11.03 m²"/>
             <column name="appartement_id" valueNumeric="3"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 2 : 10.13 m²"/>
+            <column name="piece" value="Chambre 2 : 8.07 m²"/>
             <column name="appartement_id" valueNumeric="3"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 3 : 8.07 m²"/>
+            <column name="piece" value="Chambre 3 : 10.13 m²"/>
             <column name="appartement_id" valueNumeric="3"/>
         </insert>
         <insert tableName="chambre">
-            <column name="piece" value="Chambre 4 : 11.03 m²"/>
+            <column name="piece" value="Chambre 4 : 10.13 m²"/>
             <column name="appartement_id" valueNumeric="3"/>
         </insert>
     </changeSet>
