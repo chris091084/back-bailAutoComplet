@@ -21,7 +21,7 @@ public class AppartementService {
     private AppartementRepository appartementRepository;
 
     public List<AppartementDto> getAllAppartement() {
-        List<Appartement> appartements = appartementRepository.findAll();
+        List<Appartement> appartements = appartementRepository.findAllByOrderByIdAsc();
 
         if(appartements.isEmpty())
         {
