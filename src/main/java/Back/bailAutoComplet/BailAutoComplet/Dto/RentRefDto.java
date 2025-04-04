@@ -4,37 +4,41 @@ import java.math.BigDecimal;
 
 public class RentRefDto {
 
-    private long idAppartement;
-    private BigDecimal rentRef;
-    private  BigDecimal rentRefMaj;
+    public static final String RENT_REF = "rentRef";
+    public static final String RENT_REF_MAJ = "rentRefMaj";
 
-    public RentRefDto(long idAppartement, BigDecimal rentRef, BigDecimal rentRefMaj) {
+    private long idAppartement;
+    private String fieldName;
+    private String value;
+
+
+    public RentRefDto(long idAppartement, String fieldName, String value) {
         this.idAppartement = idAppartement;
-        this.rentRef = rentRef;
-        this.rentRefMaj = rentRefMaj;
+        this.fieldName = fieldName;
+        this.value = value;
     }
 
     public long getIdAppartement() {
         return idAppartement;
     }
 
-    public void  setIdAppartement(long idAppartement) {
+    public void setIdAppartement(long idAppartement) {
         this.idAppartement = idAppartement;
     }
 
-    public BigDecimal getRentRef() {
-        return rentRef;
+    public String getFieldName() {
+        return fieldName;
     }
 
-    public void setRentRef(BigDecimal rentRef) {
-        this.rentRef = rentRef;
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
     }
 
-    public BigDecimal getRentRefMaj() {
-        return rentRefMaj;
+    public String getValue() {
+        return value;
     }
 
-    public void setRentRefMaj(BigDecimal rentRefMaj) {
-        this.rentRefMaj = rentRefMaj;
+    public void setValue(String value) {
+        this.value = value;
     }
 }

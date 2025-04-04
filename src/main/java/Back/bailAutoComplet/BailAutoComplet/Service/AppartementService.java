@@ -35,23 +35,24 @@ public class AppartementService {
     }
 
     public AppartementDto setRentRefAndRentRefMaj(RentRefDto rentRefDto ){
-try {
-    Appartement appartement = appartementRepository.getReferenceById(rentRefDto.getIdAppartement());
-    if (rentRefDto.getRentRef() != null) {
-        appartement.setRentRef(rentRefDto.getRentRef());
-    }
-    if (rentRefDto.getRentRefMaj() != null) {
-        appartement.setRentRefMaj(rentRefDto.getRentRefMaj());
+        try {
+            Appartement appartement = appartementRepository.getReferenceById(rentRefDto.getIdAppartement());
+            if (rentRefDto.getValue() != null && RentRefDto.RENT_REF.equals(rentRefDto.getFieldName()) ){
+                appartement.setValIrl(rentRefDto.getValue());
+            }else
+            {
+                appartement.settIrl(rentRefDto.getValue());
+            }
+
+            Appartement updatedAppartement = appartementRepository.save(appartement);
+
+            return new AppartementDto(updatedAppartement);
+        }catch (EntityNotFoundException e){
+
+            throw new ResourceExceptionNoFound("L'appartement avec l'id " + rentRefDto.getIdAppartement() + " n'a pas été trouvé.", e);
+        }
     }
 
-    Appartement updatedAppartement = appartementRepository.save(appartement);
-
-    return new AppartementDto(updatedAppartement);
-}catch (EntityNotFoundException e){
-
-     throw new ResourceExceptionNoFound("L'appartement avec l'id " + rentRefDto.getIdAppartement() + " n'a pas été trouvé.", e);
-}
-    }
 
     public AppartementDto setValIrlTirl(ValIrlTIrlDto valIrlTIrlDto) {
         try {
