@@ -14,11 +14,11 @@ public class RentRefDto {
         this.rentRefMaj = rentRefMaj;
     }
 
-    public long getId() {
+    public long getIdAppartement() {
         return idAppartement;
     }
 
-    public void  setId(long idAppartement) {
+    public void  setIdAppartement(long idAppartement) {
         this.idAppartement = idAppartement;
     }
 

@@ -69,6 +69,12 @@ public class Appartement {
     @Column(name = "rent_ref_maj")
     private BigDecimal rentRefMaj;
 
+    @Column(name = "val_Irl")
+    private String valIrl;
+
+    @Column(name = "t_irl")
+    private String tIrl;
+
     public Appartement() {
     }
 
@@ -90,7 +96,9 @@ public class Appartement {
             BigDecimal caution,
             String petRule,
             BigDecimal rentRef,
-            BigDecimal rentRefMaj
+            BigDecimal rentRefMaj,
+            String valIrl,
+            String tIrl
 
     ) {
         this.name = name;
@@ -111,6 +119,8 @@ public class Appartement {
         this.rentRef = rentRef;
         this.rentRefMaj = rentRefMaj;
         this.petRule = petRule;
+        this.valIrl = valIrl;
+        this.tIrl = tIrl;
     }
 
     // Getters et Setters
@@ -264,5 +274,21 @@ public class Appartement {
 
     public void setRentRefMaj(BigDecimal rentRefMaj) {
         this.rentRefMaj = rentRefMaj;
+    }
+
+    public String getValIrl() {
+        return valIrl;
+    }
+
+    public void setValIrl(String valIrl) {
+        this.valIrl = valIrl;
+    }
+
+    public String gettIrl() {
+        return tIrl;
+    }
+
+    public void settIrl(String tIrl) {
+        this.tIrl = tIrl;
     }
 }

@@ -2,6 +2,7 @@ package Back.bailAutoComplet.BailAutoComplet.Controller;
 
 import Back.bailAutoComplet.BailAutoComplet.Dto.AppartementDto;
 import Back.bailAutoComplet.BailAutoComplet.Dto.RentRefDto;
+import Back.bailAutoComplet.BailAutoComplet.Dto.ValIrlTIrlDto;
 import Back.bailAutoComplet.BailAutoComplet.Service.AppartementService;
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
 import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
@@ -27,5 +28,10 @@ public class AppartementController {
     @PostMapping("/updateRent")
     public AppartementDto postRentRefAndRentRefMaj(@RequestBody RentRefDto rentRefDto) {
         return appartementService.setRentRefAndRentRefMaj(rentRefDto);
+    }
+
+    @PostMapping("/updateValIrlTirl")
+    public AppartementDto postValIrlTirl(@RequestBody ValIrlTIrlDto valIrlTIrlDto) {
+        return appartementService.setValIrlTirl(valIrlTIrlDto);
     }
 }
