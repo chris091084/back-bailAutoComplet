@@ -1,18 +1,16 @@
 package Back.bailAutoComplet.BailAutoComplet.Dto;
 
-import java.math.BigDecimal;
+public class ValIrlTIrlDto {
 
-public class RentRefDto {
-
-    public static final String RENT_REF = "rentRef";
-    public static final String RENT_REF_MAJ = "rentRefMaj";
+    public static final String VAL_IRL = "valIrl";
+    public static final String T_IRL = "tIrl";
 
     private long idAppartement;
     private String fieldName;
     private String value;
 
 
-    public RentRefDto(long idAppartement, String fieldName, String value) {
+    public ValIrlTIrlDto(long idAppartement, String fieldName, String value) {
         this.idAppartement = idAppartement;
         this.fieldName = fieldName;
         this.value = value;
