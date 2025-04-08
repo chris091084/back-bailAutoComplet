@@ -29,6 +29,8 @@ public class AppartementDto {
     private String petRule;
     private BigDecimal rentRef;
     private BigDecimal rentRefMaj;
+    private String valIrl;
+    private String tIrl;
 
     // Constructeur prenant un objet Appartement comme source
     public AppartementDto(Appartement appartement) {
@@ -53,6 +55,8 @@ public class AppartementDto {
         this.petRule = appartement.getPetRule();
         this.rentRef = appartement.getRentRef();
         this.rentRefMaj = appartement.getRentRefMaj();
+        this.valIrl = appartement.getValIrl();
+        this.tIrl = appartement.gettIrl();
 
     }
 
@@ -129,5 +133,13 @@ public class AppartementDto {
 
     public BigDecimal getRentRefMaj() {
         return rentRefMaj;
+    }
+
+    public String getValIrl() {
+        return valIrl;
+    }
+
+    public String gettIrl() {
+        return tIrl;
     }
 }

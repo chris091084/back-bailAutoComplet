@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="10" author="christian">
+        <update tableName="appartement">
+            <column name="rent_ref" value="10.7"/>
+            <where>id = 1</where>
+        </update>
+        <update tableName="appartement">
+            <column name="rent_ref_maj" value="12.8"/>
+            <where>id = 1</where>
+        </update>
+        <update tableName="appartement">
+            <column name="rent_ref" value="11.3"/>
+            <where>id = 2</where>
+        </update>
+        <update tableName="appartement">
+            <column name="rent_ref_maj" value="13.6"/>
+            <where>id = 2</where>
+        </update>
+        <update tableName="appartement">
+            <column name="rent_ref" value="11.3"/>
+            <where>id = 3</where>
+        </update>
+        <update tableName="appartement">
+            <column name="rent_ref_maj" value="13.6"/>
+            <where>id = 3</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
