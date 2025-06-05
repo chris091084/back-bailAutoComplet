@@ -10,18 +10,9 @@ public class ValIrlTIrlDto {
     private String value;
 
 
-    public ValIrlTIrlDto(long idAppartement, String fieldName, String value) {
-        this.idAppartement = idAppartement;
+    public ValIrlTIrlDto(String fieldName, String value) {
         this.fieldName = fieldName;
         this.value = value;
-    }
-
-    public long getIdAppartement() {
-        return idAppartement;
-    }
-
-    public void setIdAppartement(long idAppartement) {
-        this.idAppartement = idAppartement;
     }
 
     public String getFieldName() {

@@ -11,7 +11,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,23 +53,13 @@ public class AppartementService {
     }
 
 
-    public AppartementDto setValIrlTirl(ValIrlTIrlDto valIrlTIrlDto) {
-        try {
-            Appartement appartement = appartementRepository.getReferenceById(valIrlTIrlDto.getIdAppartement());
+    public void setValIrlTirl(ValIrlTIrlDto valIrlTIrlDto) {
             if (valIrlTIrlDto.getValue() != null && ValIrlTIrlDto.VAL_IRL.equals(valIrlTIrlDto.getFieldName()) ){
-                appartement.setValIrl(valIrlTIrlDto.getValue());
+               appartementRepository.updateAllValIrl(valIrlTIrlDto.getValue());
             }else
             {
-                appartement.settIrl(valIrlTIrlDto.getValue());
+                appartementRepository.updateAllTirl(valIrlTIrlDto.getValue());
             }
-
-            Appartement updatedAppartement = appartementRepository.save(appartement);
-
-            return new AppartementDto(updatedAppartement);
-        }catch (EntityNotFoundException e){
-
-            throw new ResourceExceptionNoFound("L'appartement avec l'id " + valIrlTIrlDto.getIdAppartement() + " n'a pas été trouvé.", e);
-        }
     }
 }
 

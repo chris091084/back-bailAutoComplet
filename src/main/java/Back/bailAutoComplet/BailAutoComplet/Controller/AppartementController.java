@@ -31,7 +31,7 @@ public class AppartementController {
     }
 
     @PostMapping("/updateValIrlTirl")
-    public AppartementDto postValIrlTirl(@RequestBody ValIrlTIrlDto valIrlTIrlDto) {
-        return appartementService.setValIrlTirl(valIrlTIrlDto);
+    public void postValIrlTirl(@RequestBody ValIrlTIrlDto valIrlTIrlDto) {
+         appartementService.setValIrlTirl(valIrlTIrlDto);
     }
 }
