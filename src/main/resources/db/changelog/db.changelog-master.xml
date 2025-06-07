@@ -19,4 +19,5 @@
     <include file="db/changelog/changelog-12-set-col-energieWater.xml"/>
     <include file="db/changelog/changelog-13-upd-col-appartement.xml"/>
     <include file="db/changelog/changelog-14-set-rentRef-rentRefMaj-in-appartement.xml"/>
+    <include file="db/changelog/changelog-15-upd-bailleur.xml"/>
 </databaseChangeLog>
