@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "appartements")
+@Table(name = "appartement")
 public class Appartement {
 
     @Id
@@ -30,8 +30,11 @@ public class Appartement {
     @OneToMany(mappedBy = "appartement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Caracteristique> caracteristiques;
 
-    @Column(name = "type_chauffage", nullable = false)
-    private String typeChauffage;
+    @Column(name = "energieHeating", nullable = false)
+    private String energieHeating;
+
+    @Column(name = "energieWater", nullable = false)
+    private String energieWater;
 
     @Column(name = "chauffage_collectif", nullable = false)
     private Boolean chauffageCollectif;
@@ -57,7 +60,21 @@ public class Appartement {
     @Column(name = "caution")
     private BigDecimal caution;
 
-    // Constructeurs
+    @Column(name = "pet_rule")
+    private String petRule;
+
+    @Column(name = "rent_ref")
+    private BigDecimal rentRef;
+
+    @Column(name = "rent_ref_maj")
+    private BigDecimal rentRefMaj;
+
+    @Column(name = "val_Irl")
+    private String valIrl;
+
+    @Column(name = "t_irl")
+    private String tIrl;
+
     public Appartement() {
     }
 
@@ -67,22 +84,30 @@ public class Appartement {
             String adress,
             List<Chambre> chambres,
             List<Caracteristique> caracteristiques,
-            String typeChauffage,
+            String energieHeating,
+            String energieWater,
             Boolean chauffageCollectif,
             String bankName,
             String restrictions,
             String constructionPeriod,
-            BigDecimal superficie,
+            BigDecimal surface,
             BigDecimal charges,
             BigDecimal loyers,
-            BigDecimal caution
+            BigDecimal caution,
+            String petRule,
+            BigDecimal rentRef,
+            BigDecimal rentRefMaj,
+            String valIrl,
+            String tIrl
+
     ) {
         this.name = name;
         this.bailleur = bailleur;
         this.adress = adress;
         this.chambres = chambres;
         this.caracteristiques = caracteristiques;
-        this.typeChauffage = typeChauffage;
+        this.energieHeating = energieHeating;
+        this.energieWater = energieWater;
         this.chauffageCollectif = chauffageCollectif;
         this.bankName = bankName;
         this.restrictions = restrictions;
@@ -91,6 +116,11 @@ public class Appartement {
         this.charges = charges;
         this.loyers = loyers;
         this.caution = caution;
+        this.rentRef = rentRef;
+        this.rentRefMaj = rentRefMaj;
+        this.petRule = petRule;
+        this.valIrl = valIrl;
+        this.tIrl = tIrl;
     }
 
     // Getters et Setters
@@ -118,11 +148,11 @@ public class Appartement {
         this.bailleur = bailleur;
     }
 
-    public String getAdresse() {
+    public String getAdress() {
         return adress;
     }
 
-    public void setAdresse(String adresse) {
+    public void setAdress(String adress) {
         this.adress = adress;
     }
 
@@ -142,12 +172,20 @@ public class Appartement {
         this.caracteristiques = caracteristiques;
     }
 
-    public String getTypeChauffage() {
-        return typeChauffage;
+    public String getEnergieHeating() {
+        return energieHeating;
     }
 
-    public void setTypeChauffage(String typeChauffage) {
-        this.typeChauffage = typeChauffage;
+    public void setEnergieHeating(String energieHeating) {
+        this.energieHeating = energieHeating;
+    }
+
+    public String getEnergieWater() {
+        return energieWater;
+    }
+
+    public void setEnergieWater(String energieWater) {
+        this.energieWater = energieWater;
     }
 
     public Boolean getChauffageCollectif() {
@@ -186,7 +224,7 @@ public class Appartement {
         return surface;
     }
 
-    public void setSurface(BigDecimal superficie) {
+    public void setSurface(BigDecimal surface) {
         this.surface = surface;
     }
 
@@ -214,23 +252,43 @@ public class Appartement {
         this.caution = caution;
     }
 
-    @Override
-    public String toString() {
-        return "Appartement{" +
-                "id=" + id +
-                ", nom='" + name + '\'' +
-                ", adresse='" + adress + '\'' +
-                ", chambres=" + chambres +
-                ", caracteristiques=" + caracteristiques +
-                ", typeChauffage='" + typeChauffage + '\'' +
-                ", chauffageCollectif=" + chauffageCollectif +
-                ", bankName='" + bankName + '\'' +
-                ", restrictions='" + restrictions + '\'' +
-                ", constructionPeriod='" + constructionPeriod + '\'' +
-                ", surface=" + surface +
-                ", charges=" + charges +
-                ", loyers=" + loyers +
-                ", caution=" + caution +
-                '}';
+    public String getPetRule() {
+        return petRule;
+    }
+
+    public void setPetRule(String petRule) {
+        this.petRule = petRule;
+    }
+
+    public BigDecimal getRentRef() {
+        return rentRef;
+    }
+
+    public void setRentRef(BigDecimal rentRef) {
+        this.rentRef = rentRef;
+    }
+
+    public BigDecimal getRentRefMaj() {
+        return rentRefMaj;
+    }
+
+    public void setRentRefMaj(BigDecimal rentRefMaj) {
+        this.rentRefMaj = rentRefMaj;
+    }
+
+    public String getValIrl() {
+        return valIrl;
+    }
+
+    public void setValIrl(String valIrl) {
+        this.valIrl = valIrl;
+    }
+
+    public String gettIrl() {
+        return tIrl;
+    }
+
+    public void settIrl(String tIrl) {
+        this.tIrl = tIrl;
     }
 }

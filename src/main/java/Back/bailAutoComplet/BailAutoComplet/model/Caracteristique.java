@@ -2,7 +2,7 @@ package Back.bailAutoComplet.BailAutoComplet.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "caracteristiques")
+@Table(name = "caracteristique")
 public class Caracteristique {
 
     @Id
@@ -48,13 +48,5 @@ public class Caracteristique {
 
     public void setAppartement(Appartement appartement) {
         this.appartement = appartement;
-    }
-
-    @Override
-    public String toString() {
-        return "Caracteristique{" +
-                "id=" + id +
-                ", description='" + description + '\'' +
-                '}';
     }
 }

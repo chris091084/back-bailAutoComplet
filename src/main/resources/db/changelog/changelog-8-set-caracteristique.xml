@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Insertion des caractéristiques pour l'appartement d'ID 1 -->
+    <changeSet id="8" author="christian">
+        <insert tableName="caracteristique">
+            <column name="description" value="L'entrée du logement et son couloir (8.20m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La cuisine entièrement équipée (9,53m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le salon (17.58m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le WC (1.04m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La salle de bains (4.41m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Une loggia (1.99m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Un balcon (4,30m²)"/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Des placards accessibles depuis le couloir."/>
+            <column name="appartement_id" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <!-- Insertion des caractéristiques pour l'appartement d'ID 2 -->
+    <changeSet id="insert-caracteristique-appartement-2" author="ton_nom">
+        <insert tableName="caracteristique">
+            <column name="description" value="L'entrée du logement (3.68m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La cuisine entièrement équipée (6.45m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le salon (21 m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le WC (0.90m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La salle de bains (3.22m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Un balcon (5,09m²)"/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Des placards accessibles depuis le salon."/>
+            <column name="appartement_id" valueNumeric="2"/>
+        </insert>
+    </changeSet>
+
+    <!-- Insertion des caractéristiques pour l'appartement d'ID 3 -->
+    <changeSet id="insert-caracteristique-appartement-3" author="ton_nom">
+        <insert tableName="caracteristique">
+            <column name="description" value="L'entrée du logement (5,08m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La cuisine entièrement équipée (6,41m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le salon (17,14m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Le WC (0,96m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="La salle de bains (2,53m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Un dégagement (1.35m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Un balcon (3,52m²)"/>
+            <column name="appartement_id" valueNumeric="3"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
