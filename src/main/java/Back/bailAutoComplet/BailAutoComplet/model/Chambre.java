@@ -15,6 +15,8 @@ public class Chambre {
     @JoinColumn(name = "appartement_id", nullable = false)
     private Appartement appartement;
 
+    private String caracteristiqueExceptionelle;
+
 
     public Chambre() {
     }
