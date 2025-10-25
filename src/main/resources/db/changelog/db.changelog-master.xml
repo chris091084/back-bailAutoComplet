@@ -21,4 +21,5 @@
     <include file="db/changelog/changelog-14-set-rentRef-rentRefMaj-in-appartement.xml"/>
     <include file="db/changelog/changelog-15-upd-bailleur.xml"/>
     <include file="db/changelog/changelog-16-upd-chambre.xml"/>
+       <include file="db/changelog/changelog-17-set-col-etage.xml"/>
 </databaseChangeLog>
