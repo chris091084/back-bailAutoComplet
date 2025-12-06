@@ -23,7 +23,18 @@ public class BailleurService {
         return bailleurRepository.findById(id).orElse(null);
     }
 
-    public Bailleur saveBailleur(Bailleur bailleur) {
+public Bailleur createBailleur(Bailleur bailleur) {
+        return bailleurRepository.save(bailleur);
+    }
+
+    public Bailleur updateBailleur(Long id, Bailleur bailleurDetails) {
+        Bailleur bailleur = bailleurRepository.findById(id).orElseThrow(() -> new RuntimeException("Bailleur not found"));
+        // Update fields 
+        if (bailleurDetails.getName() != null) bailleur.setName(bailleurDetails.getName());
+        if (bailleurDetails.getAdress() != null) bailleur.setAdress(bailleurDetails.getAdress());
+        if (bailleurDetails.getEmail() != null) bailleur.setEmail(bailleurDetails.getEmail());
+        if (bailleurDetails.getTelephone() != null) bailleur.setTelephone(bailleurDetails.getTelephone());
+        
         return bailleurRepository.save(bailleur);
     }
 
