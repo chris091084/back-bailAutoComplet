@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+<changeSet id="changelog-19-upd-appartement" author="christian">
+    <insert tableName="appartement">
+        <column name="form_name" value="Filature 3G"/>
+        <column name="name" value="Filature"/>
+        <column name="bailleur_id" valueNumeric="3"/>
+        <column name="adress" value="56 rue de la Filature - 69100 VILLEURBANNE"/>
+        <column name="energie_heating" value="chaudière à gaz"/>
+        <column name="chauffage_collectif" valueBoolean="true"/>
+        <column name="bank_name" value="Etablissement bancaire : Crédit Mutuel de Bretagne – Louvigné du Désert&lt;br/&gt;IBAN : FR76 1558 9351 5600 1451 6244 019&lt;br/&gt;Code BIC : CMBRFR2BARK"/>
+        <column name="restrictions" value="La détention d''animaux domestiques n''est pas autorisée par le bailleur. Cette interdiction résulte du règlement de copropriété de la résidence. Ce règlement est joint en annexe."/>
+        <column name="construction_period" value="1968"/>
+        <column name="surface" valueNumeric="80.83"/>
+        <column name="etage" value="3ème étage, porte de gauche."/>
+     
+    </insert>
+
+    <insert tableName="appartement">
+        <column name="form_name" value="53A Chateau Gaillard"/>
+        <column name="name" value="Chateau Gaillard"/>
+        <column name="bailleur_id" valueNumeric="4"/>
+        <column name="adress" value="53A bis rue Château Gaillard"/>
+        <column name="energie_heating" value="chaudière à gaz"/>
+        <column name="chauffage_collectif" valueBoolean="false"/>
+        <!-- <column name="bank_name" value="Etablissement bancaire : Crédit Mutuel de Bretagne – Louvigné du Désert&lt;br/&gt;IBAN : FR76 1558 9351 5600 3177 7744 383&lt;br/&gt;Code BIC : CMBRFR2BXXX"/> //TODO bank_name -->
+        <column name="construction_period" value="1959"/>
+        <column name="surface" valueNumeric="80.53"/>
+        <column name="etage" value="3ème étage, porte de gauche."/>
+    </insert>
+
+
+</changeSet>
+</databaseChangeLog>
