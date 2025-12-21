@@ -5,12 +5,10 @@ import Back.bailAutoComplet.BailAutoComplet.Dto.RentRefDto;
 import Back.bailAutoComplet.BailAutoComplet.Dto.ValIrlTIrlDto;
 import Back.bailAutoComplet.BailAutoComplet.Service.AppartementService;
 import Back.bailAutoComplet.BailAutoComplet.model.Appartement;
-import Back.bailAutoComplet.BailAutoComplet.model.Bailleur;
-import jakarta.persistence.PostUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -33,5 +31,25 @@ public class AppartementController {
     @PostMapping("/updateValIrlTirl")
     public void postValIrlTirl(@RequestBody ValIrlTIrlDto valIrlTIrlDto) {
          appartementService.setValIrlTirl(valIrlTIrlDto);
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<AppartementDto> getAppartementById(@PathVariable Long id) {
+        return ResponseEntity.ok(appartementService.getAppartementById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<AppartementDto> createAppartement(@RequestBody Appartement appartement) {
+        return ResponseEntity.ok(appartementService.createAppartement(appartement));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<AppartementDto> updateAppartement(@PathVariable Long id, @RequestBody Appartement appartement) {
+        return ResponseEntity.ok(appartementService.updateAppartement(id, appartement));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAppartement(@PathVariable Long id) {
+        appartementService.deleteAppartement(id);
+        return ResponseEntity.noContent().build();
     }
 }

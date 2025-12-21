@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+<changeSet id="changelog-20-set-bailleu" author="christian">
+    <insert tableName="bailleur">
+        <column name="name" value="SSCI BREIZHSTOCK, Société civile immobilière au capital de 1000 €, dont le siège est à CHONAS-L'AMBALLAN (38121), 140 impasse le Clos du Buis, identifiée au SIREN sous le numéro 991506817 et immatriculée au Registre du Commerce et des Sociétés de VIENNE."/>
+        <column name="adress" value="140 impasse le Clos du Buis  -  38121 CHONAS l’AMBALLAN"/>
+        <column name="email" value="sylvain.bodin@gmail.com"/>
+        <column name="telephone" value="06 13 88 31 01"/>
+    </insert>
+    <insert tableName="bailleur">
+        <column name="name" value="SCI BZHRO, Société civile immobilière au capital de 1000 €, dont le siège est à CHONAS-L'AMBALLAN (38121), 140 impasse le Clos du Buis, identifiée au SIREN sous le numéro 993376151 et immatriculée au Registre du Commerce et des Sociétés de VIENNE"/>
+        <column name="adress" value="140 impasse le Clos du Buis  -  38121 CHONAS l’AMBALLAN"/>
+        <column name="email" value="christian.coley@hotmail.fr"/>
+        <column name="telephone" value="06 50 27 92 53"/>
+    </insert>
+</changeSet>
+</databaseChangeLog>

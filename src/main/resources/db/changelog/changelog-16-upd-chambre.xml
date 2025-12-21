@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="16" author="christian">
+        <addColumn tableName="chambre">
+            <column name="caracteristique_exceptionelle" type="varchar(250)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+        <changeSet id="chambre-caracx-data-v1" author="christian">
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 3</where>
+            </update>
+
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 4</where>
+            </update>
+
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double et a une vue sur le parc Alice et André Vansteenberghe."/>
+                <where>id = 5</where>
+            </update>
+
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre a vue sur le parc Alice et André Vansteenberghe."/>
+                <where>id = 6</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 7</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double et a un accès direct au balcon."/>
+                <where>id = 8</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 9</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre a un balcon privatif."/>
+                <where>id = 10</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 11</where>
+            </update>
+            <update tableName="chambre">
+                <column name="caracteristique_exceptionelle" value="Cette chambre est équipée d'un lit double."/>
+                <where>id = 12</where>
+            </update>
+        </changeSet>
+</databaseChangeLog>

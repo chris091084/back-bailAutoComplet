@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+<changeSet id="ajout-colonne-form-name" author="christian">
+        <addColumn tableName="appartement">
+            <column name="form_name" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <update tableName="appartement">
+            <column name="form_name" value="Filature 4D"/>
+            <where>id = 1</where>
+        </update>
+
+        <update tableName="appartement">
+            <column name="form_name" value="17B Chateau Gaillard"/>
+            <where>id = 2</where>
+        </update>
+
+        <update tableName="appartement">
+            <column name="form_name" value="Rue René"/>
+            <where>id = 3</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

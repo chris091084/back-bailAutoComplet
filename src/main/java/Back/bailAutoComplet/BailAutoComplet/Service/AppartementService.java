@@ -28,6 +28,11 @@ public class AppartementService {
             throw new ResourceExceptionNoFound("pas d'appartement disponible");
         }
 
+        if(appartements.isEmpty())
+        {
+            throw new ResourceExceptionNoFound("pas d'appartement disponible");
+        }
+
        return appartements.stream()
                .map(AppartementDto::new)
                .collect(Collectors.toList());
@@ -60,6 +65,35 @@ public class AppartementService {
             {
                 appartementRepository.updateAllTirl(valIrlTIrlDto.getValue());
             }
+    }
+    public AppartementDto getAppartementById(Long id) {
+        return appartementRepository.findById(id)
+                .map(AppartementDto::new)
+                .orElseThrow(() -> new ResourceExceptionNoFound("Appartement not found with id: " + id));
+    }
+
+    public AppartementDto createAppartement(Appartement appartement) {
+        Appartement savedAppartement = appartementRepository.save(appartement);
+        return new AppartementDto(savedAppartement);
+    }
+
+    public AppartementDto updateAppartement(Long id, Appartement appartementDetails) {
+        Appartement appartement = appartementRepository.findById(id)
+                .orElseThrow(() -> new ResourceExceptionNoFound("Appartement not found with id: " + id));
+        
+        // Update fields
+        if(appartementDetails.getValIrl() != null) appartement.setValIrl(appartementDetails.getValIrl());
+        if(appartementDetails.gettIrl() != null) appartement.settIrl(appartementDetails.gettIrl());
+        // Handle other fields as necessary, potentially passed via DTO or Entity
+        
+        Appartement updatedAppartement = appartementRepository.save(appartement);
+        return new AppartementDto(updatedAppartement);
+    }
+
+    public void deleteAppartement(Long id) {
+        Appartement appartement = appartementRepository.findById(id)
+                .orElseThrow(() -> new ResourceExceptionNoFound("Appartement not found with id: " + id));
+        appartementRepository.delete(appartement);
     }
 }
 
