@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="21" author="christian">
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 1 : 9.09 m²"/>
+            <column name="caracteriqstique_exceptionnelle" value="Cette chambre est équipée d'un lit double."/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 2 : 9.18 m²"/>
+            <column name="caracteriqstique_exceptionnelle" value="Cette chambre est équipée d'un lit double."/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 3 : 10.15 m²"/>
+            <column name="caracteriqstique_exceptionnelle" value="Cette chambre est équipée d'un lit double."/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="chambre">
+            <column name="piece" value="Chambre 4 : 10.50 m²"/>
+            <column name="caracteriqstique_exceptionnelle" value="Cette chambre est équipée d'un lit double."/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>   
+    </changeSet>
+</databaseChangeLog>

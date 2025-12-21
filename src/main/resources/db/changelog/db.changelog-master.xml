@@ -25,4 +25,5 @@
     <include file="db/changelog/changelog-18-set-bailleur.xml"/>
     <include file="db/changelog/changelog-19-set-appartement.xml"/>
     <include file="db/changelog/changelog-20-upd-appartement.xml"/>
+    <include file="db/changelog/changelog-21-set-chambre.xml"/>
 </databaseChangeLog>
