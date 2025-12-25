@@ -11,6 +11,7 @@ public class Chambre {
     @Column(nullable = false)
     private String piece;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "appartement_id", nullable = false)
     private Appartement appartement;

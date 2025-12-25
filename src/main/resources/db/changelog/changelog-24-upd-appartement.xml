@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+<changeSet id="changelog-24-upd-appartement" author="christian">
+
+    <update tableName="appartement">
+    <column name="bank_name" value="Etablissement bancaire : Crédit Mutuel de Bretagne – Louvigné du Désert&lt;br/&gt;IBAN : FR76 1558 9351 5600 1451 6244 019&lt;br/&gt;Code BIC : CMBRFR2BARK&lt;br/&gt;NOM: BREIZHSTOCK"/>
+        <column name="energie_water" value="chaudière à gaz"/>
+         <where>id = 4</where>
+        
+    </update>
+        <update tableName="appartement">
+        <column name="energie_water" value="chaudière à gaz"/>
+         <where>id = 5</where>
+    </update>
+
+
+</changeSet>
+</databaseChangeLog>
