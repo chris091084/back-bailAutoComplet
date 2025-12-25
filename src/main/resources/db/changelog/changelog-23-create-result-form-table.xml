@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="23" author="christian">
+        <!-- Create ResultForm Table -->
+        <createTable tableName="result_form">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="adress" type="text"/>
+            <column name="appartement_id" type="bigint">
+                <constraints foreignKeyName="fk_result_form_appartement" references="appartement(id)"/>
+            </column>
+            <column name="charge_price" type="decimal(19,2)"/>
+            <column name="email" type="varchar(255)"/>
+            <column name="firstname" type="varchar(255)"/>
+            <column name="date_from" type="date"/>
+            <column name="date_to" type="date"/>
+            <column name="motif" type="text"/>
+            <column name="name" type="varchar(255)"/>
+            <column name="price_no_charge" type="decimal(19,2)"/>
+            <column name="room" type="varchar(255)"/>
+            <column name="telephone" type="varchar(255)"/>
+            <column name="bailleur_id" type="bigint">
+                <constraints foreignKeyName="fk_result_form_bailleur" references="bailleur(id)"/>
+            </column>
+            <column name="bail_type" type="varchar(255)"/>
+            <column name="t_irl" type="varchar(255)"/>
+            <column name="val_irl" type="varchar(255)"/>
+            <column name="last_price_without_charge" type="decimal(19,2)"/>
+            <column name="charge_list" type="boolean"/>
+            <column name="clause_less_6_month" type="boolean"/>
+            <column name="type_residence" type="varchar(255)"/>
+            <column name="rent_ref" type="decimal(19,2)"/>
+            <column name="rent_ref_maj" type="decimal(19,2)"/>
+        </createTable>
+
+        <!-- Update Generation Table -->
+        <dropColumn tableName="generation" columnName="result_form"/>
+        <addColumn tableName="generation">
+            <column name="result_form_id" type="bigint">
+                <constraints foreignKeyName="fk_generation_result_form" references="result_form(id)"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
