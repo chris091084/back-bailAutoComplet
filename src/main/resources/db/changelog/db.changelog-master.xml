@@ -26,4 +26,7 @@
     <include file="db/changelog/changelog-19-set-appartement.xml"/>
     <include file="db/changelog/changelog-20-upd-appartement.xml"/>
     <include file="db/changelog/changelog-21-set-chambre.xml"/>
+    <include file="db/changelog/changelog-22-create-generation-table.xml"/>
+    <include file="db/changelog/changelog-23-create-result-form-table.xml"/>
+    <include file="db/changelog/changelog-24-upd-appartement.xml"/>
 </databaseChangeLog>

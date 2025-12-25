@@ -12,6 +12,7 @@ public class Caracteristique {
     @Column(nullable = false)
     private String description;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "appartement_id", nullable = false)
     private Appartement appartement;
