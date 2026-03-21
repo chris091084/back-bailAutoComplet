@@ -42,19 +42,51 @@ public class AppartementService {
         try {
             Appartement appartement = appartementRepository.getReferenceById(rentRefDto.getIdAppartement());
             if (rentRefDto.getValue() != null && RentRefDto.RENT_REF.equals(rentRefDto.getFieldName()) ){
-                appartement.setValIrl(rentRefDto.getValue());
+                appartement.setRentRef(rentRefDto.getValue());
             }else
             {
-                appartement.settIrl(rentRefDto.getValue());
+                appartement.setRentRefMaj(rentRefDto.getValue());
             }
+            
 
             Appartement updatedAppartement = appartementRepository.save(appartement);
+            
+            syncFilatureGroup(updatedAppartement, rentRefDto);
 
             return new AppartementDto(updatedAppartement);
         }catch (EntityNotFoundException e){
 
             throw new ResourceExceptionNoFound("L'appartement avec l'id " + rentRefDto.getIdAppartement() + " n'a pas été trouvé.", e);
         }
+    }
+
+    private void syncFilatureGroup(Appartement currentAppartement, RentRefDto rentRefDto) {
+        Long currentId = currentAppartement.getId();
+        if (currentId == null || (currentId != 1L && currentId != 4L)) {
+            return;
+        }
+
+        Long targetId = (currentId == 1L) ? 4L : 1L;
+
+        appartementRepository.findById(targetId).ifPresent(other -> {
+            boolean shouldSave = false;
+            
+            if (rentRefDto.getValue() != null && RentRefDto.RENT_REF.equals(rentRefDto.getFieldName())) {
+                if (!rentRefDto.getValue().equals(other.getRentRef())) {
+                    other.setRentRef(rentRefDto.getValue());
+                    shouldSave = true;
+                }
+            } else {
+                if (rentRefDto.getValue() == null ? other.getRentRefMaj() != null : !rentRefDto.getValue().equals(other.getRentRefMaj())) {
+                    other.setRentRefMaj(rentRefDto.getValue());
+                    shouldSave = true;
+                }
+            }
+            
+            if (shouldSave) {
+                appartementRepository.save(other);
+            }
+        });
     }
 
 

@@ -9,10 +9,10 @@ public class RentRefDto {
 
     private long idAppartement;
     private String fieldName;
-    private String value;
+    private BigDecimal value;
 
 
-    public RentRefDto(long idAppartement, String fieldName, String value) {
+    public RentRefDto(long idAppartement, String fieldName, BigDecimal value) {
         this.idAppartement = idAppartement;
         this.fieldName = fieldName;
         this.value = value;
@@ -34,11 +34,11 @@ public class RentRefDto {
         this.fieldName = fieldName;
     }
 
-    public String getValue() {
+    public BigDecimal getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(BigDecimal value) {
         this.value = value;
     }
 }
