@@ -17,13 +17,10 @@ public class CaracteristiqueController {
     public List<Caracteristique> getAllCaracteristique() {
         return caracteristiqueService.getAllCaracteristique();
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<Caracteristique> getCaracteristiqueById(@PathVariable Long id) {
-         return caracteristiqueService.getCaracteristiqueById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/{appartementId}")
+    public List<Caracteristique> getCaracteristiqueById(@PathVariable Long appartementId) {
+         return caracteristiqueService.getCaracteristiqueById(appartementId);
     }
-
     @PostMapping
     public ResponseEntity<Caracteristique> createCaracteristique(@RequestBody Caracteristique caracteristique) {
         return ResponseEntity.ok(caracteristiqueService.createCaracteristique(caracteristique));

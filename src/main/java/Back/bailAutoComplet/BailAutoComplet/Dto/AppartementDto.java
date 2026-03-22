@@ -31,6 +31,7 @@ public class AppartementDto {
     private String valIrl;
     private String tIrl;
     private String formName;
+    private String etage;
 
     // Constructeur prenant un objet Appartement comme source
     public AppartementDto(Appartement appartement) {
@@ -58,6 +59,7 @@ public class AppartementDto {
         this.valIrl = appartement.getValIrl();
         this.tIrl = appartement.gettIrl();
         this.formName = appartement.getFormName();
+        this.etage = appartement.getEtage();
 
     }
 
@@ -145,5 +147,8 @@ public class AppartementDto {
     }
     public String getFormName() {
         return formName;
+    }
+    public String getEtage() {
+        return etage;
     }
 }

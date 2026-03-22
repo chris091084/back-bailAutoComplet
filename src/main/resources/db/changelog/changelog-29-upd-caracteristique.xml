@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+
+         <!-- Insertion des caractéristiques pour l'appartement d'ID 4 et 5-->
+     <changeSet id="29" author="christian">
+        <update tableName="caracteristique">
+             <column name="adress" value="53A rue Château Gaillard"/>
+            <where>id = 5</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
