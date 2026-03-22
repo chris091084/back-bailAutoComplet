@@ -78,6 +78,9 @@ public class Appartement {
     @Column(name = "form_name")
     private String formName;
 
+    @Column(name = "etage")
+    private String etage;
+
     public Appartement() {
     }
 
@@ -102,7 +105,8 @@ public class Appartement {
             BigDecimal rentRefMaj,
             String valIrl,
             String tIrl,
-            String formName
+            String formName,
+            String etage
 
     ) {
         this.name = name;
@@ -126,6 +130,7 @@ public class Appartement {
         this.valIrl = valIrl;
         this.tIrl = tIrl;
         this.formName = formName;
+        this.etage = etage;
     }
 
     // Getters et Setters
@@ -303,5 +308,13 @@ public class Appartement {
 
     public void setFormName(String formName) {
         this.formName = formName;
+    }
+
+    public String getEtage() {
+        return etage;
+    }
+
+    public void setEtage(String etage) {
+        this.etage = etage;
     }
 }

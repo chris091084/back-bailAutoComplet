@@ -15,8 +15,8 @@ public class CaracteristiqueService {
     public List<Caracteristique> getAllCaracteristique() {
         return caracteristiqueRepository.findAll();
     }
-    public java.util.Optional<Caracteristique> getCaracteristiqueById(Long id) {
-        return caracteristiqueRepository.findById(id);
+    public List<Caracteristique> getCaracteristiqueById(Long appartementId) {
+  return caracteristiqueRepository.findByAppartementIdOrderByIdAsc(appartementId);
     }
 
     public Caracteristique createCaracteristique(Caracteristique caracteristique) {
