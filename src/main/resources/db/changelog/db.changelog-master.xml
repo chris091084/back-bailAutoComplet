@@ -31,4 +31,6 @@
     <include file="db/changelog/changelog-24-upd-appartement.xml"/>
     <include file="db/changelog/changelog-25-set-chambre.xml"/>
     <include file="db/changelog/changelog-26-set-caracteristique.xml"/>
+    <include file="db/changelog/changelog-27-upd-appartement.xml"/>
+    <include file="db/changelog/changelog-28-upd-caracteristique.xml"/>
 </databaseChangeLog>
