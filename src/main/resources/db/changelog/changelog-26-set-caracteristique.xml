@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+
+         <!-- Insertion des caractéristiques pour l'appartement d'ID 4 -->
+     <changeSet id="26-2" author="christian">
+        <insert tableName="caracteristique">
+            <column name="description" value="Enrée"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Cuisine"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Salon"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="WC"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Salle de bains"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+         <insert tableName="caracteristique">
+            <column name="description" value="Logia"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Balcon"/>
+            <column name="appartement_id" valueNumeric="4"/>
+        </insert>
+    </changeSet>
+
+    <!-- Insertion des caractéristiques pour l'appartement d'ID 5 -->
+    <changeSet id="26-1" author="christian">
+        <insert tableName="caracteristique">
+            <column name="description" value="Enrée"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Cuisine"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Salon"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="WC"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+        <insert tableName="caracteristique">
+            <column name="description" value="Salle de bains"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+    
+        <insert tableName="caracteristique">
+            <column name="description" value="Balcon"/>
+            <column name="appartement_id" valueNumeric="5"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
