@@ -20,6 +20,9 @@ public class AppartementService {
     @Autowired
     private AppartementRepository appartementRepository;
 
+    @Autowired
+    private IrlService irlService;
+
     public List<AppartementDto> getAllAppartement() {
         List<Appartement> appartements = appartementRepository.findAllByOrderByIdAsc();
 
@@ -91,17 +94,31 @@ public class AppartementService {
 
 
     public void setValIrlTirl(ValIrlTIrlDto valIrlTIrlDto) {
-            if (valIrlTIrlDto.getValue() != null && ValIrlTIrlDto.VAL_IRL.equals(valIrlTIrlDto.getFieldName()) ){
-               appartementRepository.updateAllValIrl(valIrlTIrlDto.getValue());
+            // Une saisie manuelle non vide passe l'IRL en mode "manuel" ; une valeur
+            // vide/nulle rebascule vers le remplissage automatique depuis l'INSEE.
+            boolean manual = valIrlTIrlDto.getValue() != null && !valIrlTIrlDto.getValue().isBlank();
+            if (ValIrlTIrlDto.VAL_IRL.equals(valIrlTIrlDto.getFieldName())){
+               appartementRepository.updateAllValIrl(valIrlTIrlDto.getValue(), manual);
             }else
             {
-                appartementRepository.updateAllTirl(valIrlTIrlDto.getValue());
+                appartementRepository.updateAllTirl(valIrlTIrlDto.getValue(), manual);
             }
     }
     public AppartementDto getAppartementById(Long id) {
-        return appartementRepository.findById(id)
-                .map(AppartementDto::new)
+        Appartement appartement = appartementRepository.findById(id)
                 .orElseThrow(() -> new ResourceExceptionNoFound("Appartement not found with id: " + id));
+
+        // Tant que l'IRL n'a pas été saisi à la main, on le remplit avec la dernière
+        // valeur publiée par l'INSEE. En cas d'échec de l'API, on garde la valeur en base.
+        if (!Boolean.TRUE.equals(appartement.getIrlManual())) {
+            irlService.getLatestIrl().ifPresent(irl -> {
+                appartement.setValIrl(irl.valIrl());
+                appartement.settIrl(irl.tIrl());
+                appartementRepository.save(appartement);
+            });
+        }
+
+        return new AppartementDto(appartement);
     }
 
     public AppartementDto createAppartement(Appartement appartement) {
@@ -116,6 +133,13 @@ public class AppartementService {
         // Update fields
         if(appartementDetails.getValIrl() != null) appartement.setValIrl(appartementDetails.getValIrl());
         if(appartementDetails.gettIrl() != null) appartement.settIrl(appartementDetails.gettIrl());
+        // Une saisie manuelle (valeur non vide) fige l'IRL ; une valeur vide rebascule
+        // vers le remplissage automatique depuis l'INSEE lors du prochain GET.
+        if(appartementDetails.getValIrl() != null || appartementDetails.gettIrl() != null) {
+            boolean hasValue = (appartementDetails.getValIrl() != null && !appartementDetails.getValIrl().isBlank())
+                    || (appartementDetails.gettIrl() != null && !appartementDetails.gettIrl().isBlank());
+            appartement.setIrlManual(hasValue);
+        }
         // Handle other fields as necessary, potentially passed via DTO or Entity
         
         Appartement updatedAppartement = appartementRepository.save(appartement);

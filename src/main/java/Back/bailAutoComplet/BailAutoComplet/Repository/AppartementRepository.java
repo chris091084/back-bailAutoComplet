@@ -17,12 +17,12 @@ public interface AppartementRepository extends JpaRepository<Appartement,Long> {
     @Modifying
     @Transactional
     @Query("UPDATE Appartement a " +
-            "SET a.tIrl = :tIrlValue" )
-    void updateAllTirl(@Param("tIrlValue") String tIrlValue);
+            "SET a.tIrl = :tIrlValue, a.irlManual = :manual" )
+    void updateAllTirl(@Param("tIrlValue") String tIrlValue, @Param("manual") boolean manual);
 
     @Modifying
     @Transactional
     @Query("UPDATE Appartement a " +
-            "SET  a.valIrl = :valIrlValue")
-    void updateAllValIrl(@Param("valIrlValue") String valIrlValue);
+            "SET  a.valIrl = :valIrlValue, a.irlManual = :manual")
+    void updateAllValIrl(@Param("valIrlValue") String valIrlValue, @Param("manual") boolean manual);
 }
