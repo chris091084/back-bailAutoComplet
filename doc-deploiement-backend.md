@@ -109,6 +109,54 @@ public class CorsConfig {
 
 ---
 
+## Intégration API INSEE — récupération automatique de l'IRL
+
+L'IRL (Indice de Référence des Loyers) est récupéré automatiquement depuis le service web SDMX public de la **BDM (Banque de Données Macroéconomiques)** de l'INSEE. **Aucune clé / token n'est nécessaire** : cet endpoint est ouvert.
+
+### Endpoint INSEE utilisé
+
+```
+GET https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM/{idbank}?startPeriod={annee}
+```
+
+| Paramètre | Valeur | Description |
+|-----------|--------|-------------|
+| `idbank` | `001515333` | Série de l'IRL trimestriel (base 100 au T4 1998, France entière) |
+| `startPeriod` | ex. `2024` | Borne basse pour alléger la réponse |
+
+Exemple :
+```bash
+curl "https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM/001515333?lastNObservations=1"
+```
+
+Réponse (SDMX XML) — on lit l'observation la plus récente :
+```xml
+<Obs TIME_PERIOD="2026-Q1" OBS_VALUE="146.6" .../>
+```
+→ injecté comme `valIrl = "146.6"` et `tIrl = "T1 2026"`.
+
+### Comportement côté API BailAutoComplete
+
+Sur **`GET /appartement/{id}`** : tant que l'IRL n'a pas été saisi à la main, les champs `valIrl` et `tIrl` sont remplis avec la dernière valeur publiée par l'INSEE, puis persistés. En cas d'indisponibilité de l'INSEE, la valeur en base est conservée (pas d'erreur).
+
+Le flag `irl_manual` (colonne `appartement.irl_manual`) donne la **priorité à la saisie manuelle** :
+- Modifier l'IRL via `PUT /appartement/{id}` ou `POST /appartement/updateValIrlTirl` avec une valeur non vide → `irl_manual = true`, l'auto-remplissage ne l'écrase plus.
+- Remettre une valeur vide → `irl_manual = false`, le remplissage automatique INSEE reprend au prochain GET.
+
+La valeur est mise en cache 6 h en mémoire (l'IRL n'est publié qu'une fois par trimestre).
+
+### Configuration (`application.properties`)
+
+```properties
+insee.bdm.base-url=https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM
+insee.irl.idbank=001515333
+insee.irl.cache-ttl-hours=6
+```
+
+> Ces trois propriétés ont des valeurs par défaut dans le code (`IrlService`) ; les surcharger n'est nécessaire que pour changer de série ou d'endpoint.
+
+---
+
 ## Déploiement sur Render (Base de données PostgreSQL)
 
 ### Étapes

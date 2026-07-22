@@ -30,6 +30,7 @@ public class AppartementDto {
     private BigDecimal rentRefMaj;
     private String valIrl;
     private String tIrl;
+    private Boolean irlManual;
     private String formName;
     private String etage;
 
@@ -58,6 +59,7 @@ public class AppartementDto {
         this.rentRefMaj = appartement.getRentRefMaj();
         this.valIrl = appartement.getValIrl();
         this.tIrl = appartement.gettIrl();
+        this.irlManual = appartement.getIrlManual();
         this.formName = appartement.getFormName();
         this.etage = appartement.getEtage();
 
@@ -145,6 +147,11 @@ public class AppartementDto {
     public String gettIrl() {
         return tIrl;
     }
+
+    public Boolean getIrlManual() {
+        return irlManual;
+    }
+
     public String getFormName() {
         return formName;
     }

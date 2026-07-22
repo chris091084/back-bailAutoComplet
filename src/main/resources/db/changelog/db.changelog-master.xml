@@ -33,4 +33,5 @@
     <include file="db/changelog/changelog-26-set-caracteristique.xml"/>
     <include file="db/changelog/changelog-27-upd-appartement.xml"/>
     <include file="db/changelog/changelog-28-upd-caracteristique.xml"/>
+    <include file="db/changelog/changelog-30-add-irl-manual-appartement.xml"/>
 </databaseChangeLog>

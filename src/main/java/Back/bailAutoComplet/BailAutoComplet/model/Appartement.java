@@ -75,6 +75,11 @@ public class Appartement {
     @Column(name = "t_irl")
     private String tIrl;
 
+    // true si l'IRL a été saisi manuellement : dans ce cas le GET ne le
+    // remplace pas par la valeur de l'API INSEE.
+    @Column(name = "irl_manual", nullable = false)
+    private Boolean irlManual = false;
+
     @Column(name = "form_name")
     private String formName;
 
@@ -300,6 +305,14 @@ public class Appartement {
 
     public void settIrl(String tIrl) {
         this.tIrl = tIrl;
+    }
+
+    public Boolean getIrlManual() {
+        return irlManual;
+    }
+
+    public void setIrlManual(Boolean irlManual) {
+        this.irlManual = irlManual;
     }
 
     public String getFormName() {
