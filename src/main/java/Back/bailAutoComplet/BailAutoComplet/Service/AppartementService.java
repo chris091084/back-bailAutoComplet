@@ -2,6 +2,7 @@ package Back.bailAutoComplet.BailAutoComplet.Service;
 
 
 import Back.bailAutoComplet.BailAutoComplet.Dto.AppartementDto;
+import Back.bailAutoComplet.BailAutoComplet.Dto.IrlDto;
 import Back.bailAutoComplet.BailAutoComplet.Dto.RentRefDto;
 import Back.bailAutoComplet.BailAutoComplet.Dto.ValIrlTIrlDto;
 import Back.bailAutoComplet.BailAutoComplet.Repository.AppartementRepository;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,14 +33,28 @@ public class AppartementService {
             throw new ResourceExceptionNoFound("pas d'appartement disponible");
         }
 
-        if(appartements.isEmpty())
-        {
-            throw new ResourceExceptionNoFound("pas d'appartement disponible");
-        }
+        // On ne récupère l'IRL qu'une fois pour toute la liste (mis en cache dans IrlService).
+        Optional<IrlDto> latestIrl = irlService.getLatestIrl();
+        appartements.forEach(appartement -> applyLatestIrl(appartement, latestIrl));
 
        return appartements.stream()
                .map(AppartementDto::new)
                .collect(Collectors.toList());
+    }
+
+    /**
+     * Remplit valIrl/tIrl avec la dernière valeur INSEE tant que l'IRL n'a pas été
+     * saisi à la main ({@code irlManual}). Persiste la mise à jour le cas échéant.
+     */
+    private void applyLatestIrl(Appartement appartement, Optional<IrlDto> latestIrl) {
+        if (Boolean.TRUE.equals(appartement.getIrlManual())) {
+            return;
+        }
+        latestIrl.ifPresent(irl -> {
+            appartement.setValIrl(irl.valIrl());
+            appartement.settIrl(irl.tIrl());
+            appartementRepository.save(appartement);
+        });
     }
 
     public AppartementDto setRentRefAndRentRefMaj(RentRefDto rentRefDto ){
@@ -110,13 +126,7 @@ public class AppartementService {
 
         // Tant que l'IRL n'a pas été saisi à la main, on le remplit avec la dernière
         // valeur publiée par l'INSEE. En cas d'échec de l'API, on garde la valeur en base.
-        if (!Boolean.TRUE.equals(appartement.getIrlManual())) {
-            irlService.getLatestIrl().ifPresent(irl -> {
-                appartement.setValIrl(irl.valIrl());
-                appartement.settIrl(irl.tIrl());
-                appartementRepository.save(appartement);
-            });
-        }
+        applyLatestIrl(appartement, irlService.getLatestIrl());
 
         return new AppartementDto(appartement);
     }
