@@ -137,7 +137,7 @@ Réponse (SDMX XML) — on lit l'observation la plus récente :
 
 ### Comportement côté API BailAutoComplete
 
-Sur **`GET /appartement/{id}`** : tant que l'IRL n'a pas été saisi à la main, les champs `valIrl` et `tIrl` sont remplis avec la dernière valeur publiée par l'INSEE, puis persistés. En cas d'indisponibilité de l'INSEE, la valeur en base est conservée (pas d'erreur).
+Sur **`GET /appartement/{id}`** et **`GET /appartement`** (liste) : tant que l'IRL n'a pas été saisi à la main, les champs `valIrl` et `tIrl` sont remplis avec la dernière valeur publiée par l'INSEE, puis persistés. En cas d'indisponibilité de l'INSEE, la valeur en base est conservée (pas d'erreur). Sur la liste, l'IRL n'est récupéré qu'une seule fois (mise en cache) pour l'ensemble des appartements.
 
 Le flag `irl_manual` (colonne `appartement.irl_manual`) donne la **priorité à la saisie manuelle** :
 - Modifier l'IRL via `PUT /appartement/{id}` ou `POST /appartement/updateValIrlTirl` avec une valeur non vide → `irl_manual = true`, l'auto-remplissage ne l'écrase plus.
