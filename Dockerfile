@@ -1,10 +1,17 @@
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 COPY . .
-RUN ./mvnw clean package -DskipTests
+RUN npm run build
 
-FROM eclipse-temurin:17-jre-alpine
+FROM node:20-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+ENV NODE_ENV=production
+# Les colonnes `timestamp` sont écrites et relues en UTC (cf. typeorm-options.ts).
+ENV TZ=UTC
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/dist ./dist
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+CMD ["node", "dist/main"]

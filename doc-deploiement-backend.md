@@ -2,13 +2,17 @@
 
 ## Stack technique
 
-- **Framework** : Spring Boot 3.3.4
-- **Java** : 17
+- **Framework** : NestJS 11
+- **Node** : 20
 - **Base de données** : PostgreSQL
-- **Migrations** : Liquibase
-- **Build** : Maven
+- **ORM** : TypeORM 0.3 (`synchronize` désactivé, schéma piloté par les migrations)
+- **Migrations** : migrations TypeORM (`src/database/migrations`)
+- **Build** : npm / `nest build`
 - **Hébergement** : Koyeb (gratuit, ne s'éteint pas)
-- **Base de données hébergée** : Render PostgreSQL (gratuit 90 jours)
+- **Base de données hébergée** : Render PostgreSQL
+
+> Le backend était auparavant en Spring Boot 3.3 / Java 17 / Maven / Liquibase.
+> Le contrat HTTP est inchangé : mêmes routes, mêmes charges utiles JSON.
 
 ---
 
@@ -23,89 +27,90 @@
 
 ---
 
-## Fichiers de configuration
+## Variables d'environnement
 
-### 1. Dockerfile (racine du projet)
+| Variable | Obligatoire | Défaut | Rôle |
+|----------|-------------|--------|------|
+| `DATABASE_URL` | en production | — | URL de connexion, forme `postgres://user:pass@hote:5432/base` **ou** `jdbc:postgresql://hote:5432/base?user=…&password=…` |
+| `DB_USERNAME` / `DB_PASSWORD` | si absents de l'URL | `postgres` / `root` | Identifiants |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | en local | `localhost` / `5432` / `bailAutoComplete` | Connexion locale quand `DATABASE_URL` n'est pas défini |
+| `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par Render) |
+| `DB_MIGRATIONS_RUN` | non | `true` | Applique les migrations au démarrage, comme le faisait Liquibase |
+| `DB_LOGGING` | non | `false` | Trace le SQL |
+| `CORS_ORIGIN` | oui | `http://localhost:4200` | Origine autorisée |
+| `PORT` | non | `8080` | Port d'écoute |
+| `INSEE_BDM_BASE_URL` | non | service SDMX public | Endpoint INSEE |
+| `INSEE_IRL_IDBANK` | non | `001515333` | Série IRL |
+| `INSEE_IRL_CACHE_TTL_HOURS` | non | `6` | Durée du cache IRL |
 
-```dockerfile
-FROM eclipse-temurin:17-jdk-alpine AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests
+Un gabarit complet est fourni dans `.env.example`.
 
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+---
+
+## Base de données
+
+### Mise à niveau d'une base existante (production, ou base locale déjà remplie)
+
+Le schéma de production a été construit par Liquibase. Les migrations TypeORM
+**rejouent le même historique** : il ne faut donc pas les exécuter sur cette
+base, mais les marquer comme déjà appliquées.
+
+```bash
+DB_MIGRATIONS_RUN=false npm run migration:baseline
 ```
 
-### 2. application.properties (dev local)
+Le script refuse de s'exécuter si la table `appartement` n'existe pas, pour
+éviter de « baseliner » une base vierge par erreur.
 
-```properties
-spring.application.name=BailAutoComplet
-spring.datasource.url=jdbc:postgresql://localhost:5432/bailAutoComplete
-spring.datasource.username=postgres
-spring.datasource.password=root
-spring.datasource.driver-class-name=org.postgresql.Driver
+> **À faire une seule fois, avant le premier déploiement de la version NestJS.**
+> Sans cela, le démarrage échouera sur un `CREATE TABLE "bailleur"` alors que la
+> table existe déjà.
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.show-sql=true
+### Création d'une base de zéro
 
-spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml
+```bash
+createdb bailAutoComplete
+npm run migration:run
 ```
 
-### 3. application-prod.properties (production)
+Les migrations recréent le schéma **et** les données de référence (bailleurs,
+appartements, chambres, caractéristiques) à l'identique de la production.
 
-```properties
-spring.application.name=BailAutoComplet
+### Correspondance avec les anciens changelogs Liquibase
 
-spring.datasource.url=${DATABASE_URL}
-spring.datasource.driver-class-name=org.postgresql.Driver
+Chaque migration porte en en-tête le changelog dont elle est issue. Deux écarts
+volontaires :
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.show-sql=false
+- **`changelog-29`** n'a pas d'équivalent : il n'était pas référencé dans
+  `db.changelog-master.xml`, n'a donc jamais été appliqué, et ciblait de toute
+  façon une colonne `adress` inexistante sur la table `caracteristique`.
+- **`1700000031000-AddValIrlAndTIrlToAppartement`** n'a pas de changelog
+  d'origine : les colonnes `appartement.val_irl` et `appartement.t_irl` avaient
+  été créées silencieusement par Hibernate (`ddl-auto=update`). Sans cette
+  migration, une base recréée de zéro serait incomplète.
 
-spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml
+### Commandes
+
+```bash
+npm run migration:show      # état des migrations
+npm run migration:run       # applique les migrations en attente
+npm run migration:revert    # annule la dernière migration
+npm run migration:baseline  # marque tout comme appliqué, sans exécuter
 ```
 
-### 4. CorsConfig.java (configuration CORS)
+---
 
-```java
-package Back.bailAutoComplet.BailAutoComplet.config;
+## Développement local
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
-
-import java.util.Arrays;
-
-@Configuration
-public class CorsConfig {
-
-    @Value("${CORS_ORIGIN:http://localhost:4200}")
-    private String corsOrigin;
-
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(corsOrigin));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
-    }
-}
+```bash
+npm install
+cp .env.example .env        # ajuster les identifiants Postgres
+npm run start:dev           # http://localhost:8080
+npm test                    # tests unitaires
 ```
+
+Le front (`bailAutoComplete-Front`) proxifie `/api` vers `http://localhost:8080`
+via `proxy.conf.json` : rien à changer côté front.
 
 ---
 
@@ -145,70 +150,55 @@ Le flag `irl_manual` (colonne `appartement.irl_manual`) donne la **priorité à 
 
 La valeur est mise en cache 6 h en mémoire (l'IRL n'est publié qu'une fois par trimestre).
 
-### Configuration (`application.properties`)
-
-```properties
-insee.bdm.base-url=https://www.bdm.insee.fr/series/sdmx/data/SERIES_BDM
-insee.irl.idbank=001515333
-insee.irl.cache-ttl-hours=6
-```
-
-> Ces trois propriétés ont des valeurs par défaut dans le code (`IrlService`) ; les surcharger n'est nécessaire que pour changer de série ou d'endpoint.
-
 ---
 
 ## Déploiement sur Render (Base de données PostgreSQL)
 
-### Étapes
-
 1. Créer un compte sur **render.com** (connexion GitHub)
-2. Cliquer sur **New** → **PostgreSQL**
+2. **New** → **PostgreSQL**
 3. Configurer :
    - **Name** : `bailautocomplete-db`
    - **Region** : Frankfurt (EU Central)
    - **Plan** : Free
-4. Cliquer sur **Create Database**
+4. **Create Database**
 5. Récupérer l'**Internal Database URL** dans la section Connections
 
-### Format de l'URL pour Spring Boot
-
-Transformer l'URL PostgreSQL :
-```
-postgres://USER:PASSWORD@HOST/DATABASE
-```
-
-En URL JDBC :
-```
-jdbc:postgresql://HOST:5432/DATABASE?user=USER&password=PASSWORD
-```
+L'URL fournie par Render (`postgres://USER:PASSWORD@HOST/DATABASE`) est
+directement exploitable : plus besoin de la convertir en URL JDBC.
 
 ---
 
-## Déploiement sur Koyeb (Backend Spring Boot)
-
-### Étapes
+## Déploiement sur Koyeb (Backend NestJS)
 
 1. Créer un compte sur **koyeb.com** (connexion GitHub)
-2. Cliquer sur **Create Service** → **Web Service**
+2. **Create Service** → **Web Service**
 3. Sélectionner **GitHub** et choisir le repo backend
 4. Configurer :
-   - **Builder** : Dockerfile (ou Buildpack)
+   - **Builder** : Dockerfile
    - **Region** : Frankfurt
    - **Instance type** : Free
+   - **Health check** : `GET /actuator/health`
 5. Ajouter les **variables d'environnement** :
 
 | Variable | Valeur |
 |----------|--------|
-| `DATABASE_URL` | `jdbc:postgresql://HOST:5432/DATABASE?user=USER&password=PASSWORD` |
+| `DATABASE_URL` | `postgres://USER:PASSWORD@HOST:5432/DATABASE` |
+| `DB_SSL` | `true` |
 | `CORS_ORIGIN` | `https://bail-auto-complete-front.vercel.app` |
 
-6. Cliquer sur **Deploy**
+6. **Deploy**
+
+> Avant ce premier déploiement, exécuter le **baseline** décrit plus haut sur la
+> base de production.
 
 ### URL finale
 
 ```
 https://relative-ammamaria-mundus09-e11bb300.koyeb.app
 ```
+
+Le endpoint `/actuator/health` est conservé (il remplace celui de
+spring-boot-starter-actuator) pour ne pas avoir à reconfigurer le health check.
 
 ---
 
@@ -222,16 +212,21 @@ https://relative-ammamaria-mundus09-e11bb300.koyeb.app
 
 ---
 
-## Commandes utiles
+## Troubleshooting
 
-### Donner les permissions au Maven Wrapper
+### `relation "bailleur" already exists` au démarrage
+
+Le baseline n'a pas été fait sur cette base. Lancer :
 
 ```bash
-git update-index --chmod=+x mvnw
-git add mvnw
-git commit -m "Fix mvnw permission"
-git push
+DB_MIGRATIONS_RUN=false npm run migration:baseline
 ```
+
+### `column "val_irl" does not exist`
+
+La base a été construite uniquement à partir des anciens changelogs Liquibase,
+sans passer par Hibernate. Appliquer la migration
+`1700000031000-AddValIrlAndTIrlToAppartement`.
 
 ### Réinitialiser la base de données (via psql)
 
@@ -245,35 +240,4 @@ CREATE SCHEMA public;
 \q
 ```
 
----
-
-## Troubleshooting
-
-### Erreur "Permission denied" sur mvnw
-
-```bash
-chmod +x mvnw
-git add mvnw
-git commit -m "Fix mvnw permission"
-git push
-```
-
-### Erreur CORS 403 Forbidden
-
-1. Vérifier que `CORS_ORIGIN` est correctement configuré
-2. Vérifier que la classe `CorsConfig.java` existe
-3. S'assurer qu'il n'y a pas de `/` à la fin de l'URL
-
-### Erreur Liquibase checksum
-
-Ajouter la variable d'environnement :
-```
-SPRING_LIQUIBASE_CLEAR_CHECKSUMS=true
-```
-
----
-
-## Limitations du plan gratuit
-
-- **Render PostgreSQL** : expire après 90 jours (recréer une nouvelle base)
-- **Koyeb Free** : 1 service gratuit, ne s'éteint pas
+Puis `npm run migration:run` pour tout reconstruire.
