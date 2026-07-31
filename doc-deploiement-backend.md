@@ -7,22 +7,37 @@
 - **Base de données** : PostgreSQL
 - **ORM** : TypeORM 0.3 (`synchronize` désactivé, schéma piloté par les migrations)
 - **Migrations** : migrations TypeORM (`src/database/migrations`)
-- **Build** : npm / `nest build`
-- **Hébergement** : Koyeb (gratuit, ne s'éteint pas)
-- **Base de données hébergée** : Render PostgreSQL
+- **Build** : npm / `nest build`, image Docker poussée sur le Container Registry Scaleway
+- **Hébergement** : Scaleway Serverless Container (région Paris, `fr-par`)
+- **Base de données hébergée** : Scaleway Serverless SQL (PostgreSQL-16)
 
 > Le backend était auparavant en Spring Boot 3.3 / Java 17 / Maven / Liquibase.
 > Le contrat HTTP est inchangé : mêmes routes, mêmes charges utiles JSON.
+>
+> L'hébergement était auparavant sur Koyeb (backend) et Render (base de données) ;
+> tout est désormais sur Scaleway, organisation **bailAuto**, région **Paris (PAR)**.
+> Le détail de l'infrastructure Scaleway est dans [docs/deploiement-scaleway.md](docs/deploiement-scaleway.md).
 
 ---
 
 ## Architecture de déploiement
 
 ```
-┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│    Frontend     │ ──── │    Backend      │ ──── │   PostgreSQL    │
-│    (Vercel)     │      │    (Koyeb)      │      │    (Render)     │
-└─────────────────┘      └─────────────────┘      └─────────────────┘
+┌─────────────────┐      ┌──────────────────────────┐      ┌──────────────────────┐
+│    Frontend     │ ──── │   Serverless Container   │ ──── │    Serverless SQL    │
+│    (Vercel)     │      │     bailauto-backend     │      │  bailautocomplete-db │
+└─────────────────┘      └──────────────────────────┘      └──────────────────────┘
+                                      ▲
+                                      │ image Docker
+                         ┌──────────────────────────┐
+                         │    Container Registry    │
+                         │ bailautocomplete-registry│
+                         └──────────────────────────┘
+                                      ▲
+                                      │ build & push
+                         ┌──────────────────────────┐
+                         │      GitHub Actions      │
+                         └──────────────────────────┘
 ```
 
 ---
@@ -31,14 +46,14 @@
 
 | Variable | Obligatoire | Défaut | Rôle |
 |----------|-------------|--------|------|
-| `DATABASE_URL` | en production | — | URL de connexion, forme `postgres://user:pass@hote:5432/base` **ou** `jdbc:postgresql://hote:5432/base?user=…&password=…` |
+| `DATABASE_URL` | en production | — | URL de connexion, forme `postgres://user:pass@hote:5432/base` **ou** `jdbc:postgresql://hote:5432/base?user=…&password=…`. Sur Scaleway Serverless SQL : `postgres://[application-id]:[clé-secrète]@[host]:5432/[database]?sslmode=require` |
 | `DB_USERNAME` / `DB_PASSWORD` | si absents de l'URL | `postgres` / `root` | Identifiants |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` | en local | `localhost` / `5432` / `bailAutoComplete` | Connexion locale quand `DATABASE_URL` n'est pas défini |
-| `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par Render) |
+| `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par Serverless SQL) |
 | `DB_MIGRATIONS_RUN` | non | `true` | Applique les migrations au démarrage, comme le faisait Liquibase |
 | `DB_LOGGING` | non | `false` | Trace le SQL |
 | `CORS_ORIGIN` | oui | `http://localhost:4200` | Origine autorisée |
-| `PORT` | non | `8080` | Port d'écoute |
+| `PORT` | non | `8080` | Port d'écoute. **Ne jamais le définir à la main sur le Serverless Container** : Scaleway l'injecte lui-même |
 | `INSEE_BDM_BASE_URL` | non | service SDMX public | Endpoint INSEE |
 | `INSEE_IRL_IDBANK` | non | `001515333` | Série IRL |
 | `INSEE_IRL_CACHE_TTL_HOURS` | non | `6` | Durée du cache IRL |
@@ -152,41 +167,71 @@ La valeur est mise en cache 6 h en mémoire (l'IRL n'est publié qu'une fois par
 
 ---
 
-## Déploiement sur Render (Base de données PostgreSQL)
+## Déploiement sur Scaleway — Base de données (Serverless SQL)
 
-1. Créer un compte sur **render.com** (connexion GitHub)
-2. **New** → **PostgreSQL**
-3. Configurer :
-   - **Name** : `bailautocomplete-db`
-   - **Region** : Frankfurt (EU Central)
-   - **Plan** : Free
-4. **Create Database**
-5. Récupérer l'**Internal Database URL** dans la section Connections
+1. Console Scaleway → **Serverless** → **Serverless SQL Databases**
+2. Créer la base :
+   - **Nom** : `bailautocomplete-db`
+   - **Moteur** : PostgreSQL-16
+   - **Région** : Paris (PAR)
+   - **Autoscaling vCPU** : 0 – 1 (le 0 permet la mise en veille, le 1 plafonne le coût)
+3. La connexion se fait par **clé IAM**, pas par un couple utilisateur/mot de passe :
+   créer une application IAM dédiée (`BailAutoComplete`) et lui attacher la policy
+   **`ServerlessSQLDatabaseFullAccess`** — nécessaire pour que TypeORM puisse
+   créer et modifier les tables via les migrations.
+4. Récupérer la chaîne de connexion :
 
-L'URL fournie par Render (`postgres://USER:PASSWORD@HOST/DATABASE`) est
-directement exploitable : plus besoin de la convertir en URL JDBC.
+```
+postgres://[application-id]:[clé-secrète]@[host]:5432/[database]?sslmode=require
+```
+
+`sslmode=require` est obligatoire ; le code en déduit `DB_SSL=true`.
 
 ---
 
-## Déploiement sur Koyeb (Backend NestJS)
+## Déploiement sur Scaleway — Backend (Serverless Container)
 
-1. Créer un compte sur **koyeb.com** (connexion GitHub)
-2. **Create Service** → **Web Service**
-3. Sélectionner **GitHub** et choisir le repo backend
-4. Configurer :
-   - **Builder** : Dockerfile
-   - **Region** : Frankfurt
-   - **Instance type** : Free
-   - **Health check** : `GET /actuator/health`
-5. Ajouter les **variables d'environnement** :
+L'image Docker est construite par GitHub Actions et poussée sur le **Container
+Registry** avant d'être déployée (voir la section CI/CD plus bas).
+
+### Container Registry
+
+| Paramètre | Valeur |
+|----------|--------|
+| Namespace | `bailautocomplete-registry` (privé, région PAR) |
+| Image | `backend`, taguée `latest` + hash du commit |
+| URL | `rg.fr-par.scw.cloud/bailautocomplete-registry/backend:latest` |
+
+### Container
+
+1. Console Scaleway → **Serverless** → **Containers** → namespace `bailauto-containers`
+2. Créer le container à partir de l'image du registry :
+
+| Paramètre | Valeur |
+|----------|--------|
+| Nom | `bailauto-backend` |
+| Port | `8080` |
+| Ressources | 512 MB RAM / 250 mvCPU |
+| Autoscaling | min 0 — max 2 instances |
+| Concurrence max par instance | 80 requêtes |
+| Health check | HTTP `GET /actuator/health` (intervalle 10 s, seuil d'échec 30) |
+
+3. **Variables d'environnement** :
 
 | Variable | Valeur |
 |----------|--------|
-| `DATABASE_URL` | `postgres://USER:PASSWORD@HOST:5432/DATABASE` |
 | `DB_SSL` | `true` |
+| `DB_MIGRATIONS_RUN` | `true` |
 | `CORS_ORIGIN` | `https://bail-auto-complete-front.vercel.app` |
 
-6. **Deploy**
+4. **Secret** (et non variable classique, pour ne pas exposer les identifiants) :
+
+| Secret | Valeur |
+|--------|--------|
+| `DATABASE_URL` | chaîne de connexion complète vers `bailautocomplete-db` |
+
+> ⚠️ Ne pas définir `PORT` : Scaleway l'injecte et une valeur manuelle casse le
+> démarrage.
 
 > Avant ce premier déploiement, exécuter le **baseline** décrit plus haut sur la
 > base de production.
@@ -194,7 +239,7 @@ directement exploitable : plus besoin de la convertir en URL JDBC.
 ### URL finale
 
 ```
-https://relative-ammamaria-mundus09-e11bb300.koyeb.app
+https://bailautocontainers5e6cf272-bailauto-backend.functions.fnc.fr-par.scw.cloud
 ```
 
 Le endpoint `/actuator/health` est conservé (il remplace celui de
@@ -202,13 +247,53 @@ spring-boot-starter-actuator) pour ne pas avoir à reconfigurer le health check.
 
 ---
 
-## CI/CD automatique
+## CI/CD — GitHub Actions
 
-À chaque `git push` sur la branche `master` :
-1. Koyeb détecte le changement
-2. Build automatique via Dockerfile
-3. Déploiement automatique
-4. Zero downtime
+Workflow : [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+
+À chaque `git push` sur la branche de déploiement :
+1. Checkout du code
+2. Connexion au Container Registry Scaleway (`docker/login-action`, utilisateur
+   `nologin`, mot de passe = `SCW_SECRET_KEY`)
+3. Build de l'image via le `Dockerfile`, taguée `:latest` et `:${{ github.sha }}`
+4. Push des deux tags vers le registry
+5. *(commenté)* Redéploiement du Serverless Container sur la nouvelle image
+
+> ⚠️ Le déclencheur est actuellement `branches: [master1]` — le workflow ne se
+> lance donc **jamais**. Le remettre sur `master` pour activer la CI.
+
+> L'étape 5 est commentée : la décommenter après avoir ajouté le secret
+> `CONTAINER_ID` (ID du Serverless Container). Sans elle, l'image est bien
+> publiée mais le container continue de tourner sur l'ancienne version — il faut
+> le redéployer à la main depuis la console.
+
+### Secrets GitHub
+
+| Secret | Rôle |
+|--------|------|
+| `SCW_SECRET_KEY` | Clé secrète de l'application IAM `ci-github-actions` |
+| `CONTAINER_REGISTRY_ENDPOINT` | `rg.fr-par.scw.cloud/bailautocomplete-registry` |
+| `CONTAINER_ID` *(à ajouter)* | ID du Serverless Container, pour le redéploiement auto |
+
+L'application IAM `ci-github-actions` porte les policies
+`ContainerRegistryFullAccess` et `ContainersFullAccess`.
+
+---
+
+## Coûts et garde-fous
+
+| Poste | Coût mensuel estimé |
+|-------|---------------------|
+| Serverless SQL (1 h d'activité/jour, 1 Go) | ~4,38 € |
+| Serverless Container (2 h d'activité/jour) | ~0,77 € |
+| Container Registry | ~0,06 € |
+| **Total** | **~5,20 €/mois** |
+
+Estimations pour un usage modéré ; la facture réelle suit le trafic.
+
+Une alerte de facturation à 10 €/mois est configurée, mais une alerte
+**informe sans bloquer**. Les vrais plafonds sont les limites d'autoscaling :
+1 vCPU max sur la base, 2 instances × 250 mvCPU / 512 MB sur le container.
 
 ---
 
