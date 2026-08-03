@@ -42,8 +42,49 @@
 | `INSEE_BDM_BASE_URL` | non | service SDMX public | Endpoint INSEE |
 | `INSEE_IRL_IDBANK` | non | `001515333` | Série IRL |
 | `INSEE_IRL_CACHE_TTL_HOURS` | non | `6` | Durée du cache IRL |
+| `JWT_ACCESS_SECRET` | **oui** | — | Signature de l'access token. **L'API refuse de démarrer sans.** |
+| `JWT_REFRESH_SECRET` | **oui** | — | Signature du refresh token. Valeur **différente** de la précédente. |
+| `JWT_ACCESS_TTL` | non | `900` | Durée de vie de l'access token, en secondes |
+| `JWT_REFRESH_TTL` | non | `604800` | Durée de vie du refresh token, en secondes |
+| `COOKIE_SAMESITE` | **si domaines distincts** | `strict` | `none` obligatoire quand le front n'est pas sur le même site que l'API |
+| `COOKIE_SECURE` | non | `true` si `NODE_ENV=production` | Réserve les cookies à HTTPS |
+| `COOKIE_DOMAIN` | non | — | À ne poser que pour partager les cookies entre sous-domaines |
 
 Un gabarit complet est fourni dans `.env.example`.
+
+### Authentification : les deux pièges du premier déploiement
+
+**1. Les secrets JWT sont obligatoires.** Sans eux, le conteneur s'arrête au
+démarrage sur :
+
+```
+ERROR [ExceptionHandler] Error: JWT_ACCESS_SECRET est absent de l'environnement
+```
+
+C'est délibéré : signer les jetons avec une valeur par défaut reviendrait à
+laisser n'importe qui forger une session. Générer deux valeurs **distinctes** :
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+**2. Le mot de passe vit en base, pas dans l'environnement.** Il n'est pas
+déployé avec le code et aucune route HTTP ne permet de le poser. Il faut le semer
+sur la base **de production**, depuis un poste local pointé sur elle :
+
+```bash
+DATABASE_URL='postgres://user:pass@hote:5432/base' npm run auth:seed
+```
+
+Un mot de passe semé en local ne vaut que pour la base locale : `/auth/login`
+répondra 401 en production tant que l'opération n'a pas été faite là-bas.
+
+**3. Cookies cross-domaine.** Le front et l'API n'étant pas sur le même domaine,
+il faut `COOKIE_SAMESITE=none` (avec HTTPS, donc `COOKIE_SECURE=true`, déjà
+implicite en production) et `CORS_ORIGIN` réglé sur l'URL exacte du front. Sinon
+le navigateur ignore les cookies **silencieusement**, sans message d'erreur.
+
+Le détail complet est dans `doc-authentification.md`.
 
 ---
 
@@ -199,6 +240,33 @@ https://relative-ammamaria-mundus09-e11bb300.koyeb.app
 
 Le endpoint `/actuator/health` est conservé (il remplace celui de
 spring-boot-starter-actuator) pour ne pas avoir à reconfigurer le health check.
+
+### Démarrage à froid : `/actuator/health/readiness`
+
+Sur un hébergement qui met le conteneur à l'échelle zéro (Scaleway Serverless
+Containers), la première requête après une période d'inactivité attend le
+réveil de l'instance — plusieurs secondes pendant lesquelles le front doit
+afficher un écran de chargement plutôt qu'un formulaire de mot de passe qui
+semble figé.
+
+| Endpoint | Rôle | Base interrogée |
+|----------|------|-----------------|
+| `GET /actuator/health` | vivacité, health check de l'hébergeur | non |
+| `GET /actuator/health/readiness` | disponibilité, écran de chargement du front | oui (`SELECT 1`) |
+
+Réponses de `readiness` :
+
+```jsonc
+// 200 — l'API et la base répondent, le front peut afficher le login
+{ "status": "UP", "database": "UP", "uptimeMs": 12043 }
+
+// 503 — instance réveillée mais base pas encore joignable, le front repolle
+{ "status": "STARTING", "database": "DOWN", "uptimeMs": 310 }
+```
+
+La route est publique (aucun guard) : elle est appelée avant toute
+authentification. `READINESS_TIMEOUT_MS` (4000 par défaut) borne le `SELECT 1`
+pour renvoyer un 503 rapide au lieu de laisser la requête pendre.
 
 ---
 
