@@ -9,6 +9,7 @@ import { ChambreModule } from './chambre/chambre.module';
 import { buildTypeOrmOptions } from './database/typeorm-options';
 import { GenerationModule } from './generation/generation.module';
 import { HealthController } from './health/health.controller';
+import { LocataireModule } from './locataire/locataire.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HealthController } from './health/health.controller';
     ChambreModule,
     CaracteristiqueModule,
     GenerationModule,
+    LocataireModule,
   ],
   controllers: [HealthController],
 })
