@@ -21,6 +21,14 @@ export class LocataireDto {
    */
   dateSignatureContrat: string | null;
   /**
+   * `result_form.price_no_charge` et `result_form.charge_price` : les montants
+   * du bail signé, que la quittance de loyer reprend ligne à ligne. Pris sur le
+   * bail et non sur l'appartement, une colocation louant chaque chambre à son
+   * prix.
+   */
+  loyerHorsCharges: number | null;
+  charges: number | null;
+  /**
    * Date d'envoi de la lettre de congé au format ISO, `null` si aucune n'est
    * partie : c'est ce que la liste des locataires affiche.
    */
@@ -36,6 +44,8 @@ export class LocataireDto {
     this.appartementNom = locataire.appartement?.name ?? null;
     this.resultFormId = locataire.resultForm?.id ?? null;
     this.dateSignatureContrat = locataire.resultForm?.from ?? null;
+    this.loyerHorsCharges = locataire.resultForm?.priceNoCharge ?? null;
+    this.charges = locataire.resultForm?.chargePrice ?? null;
     // `new Date` plutôt que `.toISOString()` directement : selon le pilote, une
     // colonne timestamptz peut remonter en chaîne plutôt qu'en Date.
     this.resiliationEnvoyeeLe = locataire.resiliationEnvoyeeLe
