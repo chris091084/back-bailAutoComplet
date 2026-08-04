@@ -10,6 +10,7 @@ import { buildTypeOrmOptions } from './database/typeorm-options';
 import { GenerationModule } from './generation/generation.module';
 import { HealthController } from './health/health.controller';
 import { LocataireModule } from './locataire/locataire.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { LocataireModule } from './locataire/locataire.module';
     CaracteristiqueModule,
     GenerationModule,
     LocataireModule,
+    MailModule,
   ],
   controllers: [HealthController],
 })

@@ -50,6 +50,19 @@ export class LocataireController {
     return new LocataireDto(await this.locataireService.createLocataire(body));
   }
 
+  /**
+   * Appelé par le front une fois la lettre de congé effectivement envoyée : la
+   * date reste ainsi cohérente avec ce qui est parti, même si le mail échoue.
+   */
+  @Post(':id/resiliation')
+  async marquerResiliationEnvoyee(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(
+      await this.locataireService.marquerResiliationEnvoyee(id),
+    );
+  }
+
   @Put(':id')
   async updateLocataire(
     @Param('id', ParseIntPipe) id: number,

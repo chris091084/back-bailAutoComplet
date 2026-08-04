@@ -8,4 +8,9 @@ export class UpsertLocataireDto {
   telephone?: string | null;
   email?: string | null;
   appartementId?: number;
+  /**
+   * `null` explicite pour détacher le locataire de son result_form ; absent, la
+   * liaison existante est conservée.
+   */
+  resultFormId?: number | null;
 }
