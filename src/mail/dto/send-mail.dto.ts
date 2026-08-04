@@ -35,9 +35,10 @@ export class SendMailDto {
   @IsNotEmpty()
   text!: string;
 
+  // Douze : une année de quittances mensuelles, qui partent dans un seul mail.
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(5)
+  @ArrayMaxSize(12)
   @ValidateNested({ each: true })
   @Type(() => MailAttachmentDto)
   attachments?: MailAttachmentDto[];
