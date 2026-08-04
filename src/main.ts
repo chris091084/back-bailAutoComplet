@@ -4,10 +4,15 @@ import { NestFactory, Reflector } from '@nestjs/core';
 // projet n'active pas `esModuleInterop`, un import par défaut compilerait en
 // `cookie_parser_1.default`, qui n'existe pas à l'exécution.
 import * as cookieParser from 'cookie-parser';
+import { json } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  // POST /mail/send transporte les pièces jointes en base64 dans le JSON : la
+  // limite Express par défaut (100 ko) refuserait un .docx de taille normale.
+  app.use(json({ limit: '10mb' }));
 
   // Les jetons d'authentification voyagent en cookies httpOnly : sans ce
   // middleware, `request.cookies` est vide et les stratégies JWT ne trouvent

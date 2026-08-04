@@ -13,6 +13,18 @@ export class LocataireDto {
   email: string | null;
   appartementId: number | null;
   appartementNom: string | null;
+  resultFormId: number | null;
+  /**
+   * `result_form.date_from`, au format « AAAA-MM-JJ » de la colonne `date` :
+   * la date de signature du bail, que le front reporte dans la lettre de congé
+   * sans avoir à recharger la génération complète.
+   */
+  dateSignatureContrat: string | null;
+  /**
+   * Date d'envoi de la lettre de congé au format ISO, `null` si aucune n'est
+   * partie : c'est ce que la liste des locataires affiche.
+   */
+  resiliationEnvoyeeLe: string | null;
 
   constructor(locataire: Locataire) {
     this.id = locataire.id;
@@ -22,5 +34,12 @@ export class LocataireDto {
     this.email = locataire.email;
     this.appartementId = locataire.appartement?.id ?? null;
     this.appartementNom = locataire.appartement?.name ?? null;
+    this.resultFormId = locataire.resultForm?.id ?? null;
+    this.dateSignatureContrat = locataire.resultForm?.from ?? null;
+    // `new Date` plutôt que `.toISOString()` directement : selon le pilote, une
+    // colonne timestamptz peut remonter en chaîne plutôt qu'en Date.
+    this.resiliationEnvoyeeLe = locataire.resiliationEnvoyeeLe
+      ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
+      : null;
   }
 }
