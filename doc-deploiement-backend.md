@@ -8,6 +8,7 @@
 - **ORM** : TypeORM 0.3 (`synchronize` désactivé, schéma piloté par les migrations)
 - **Migrations** : migrations TypeORM (`src/database/migrations`)
 - **Build** : npm / `nest build`
+- **Conversion PDF** : LibreOffice Writer, dans l'image (`libreoffice-convert`)
 - **Hébergement** : Koyeb (gratuit, ne s'éteint pas)
 - **Base de données hébergée** : Render PostgreSQL
 
@@ -267,6 +268,44 @@ Réponses de `readiness` :
 La route est publique (aucun guard) : elle est appelée avant toute
 authentification. `READINESS_TIMEOUT_MS` (4000 par défaut) borne le `SELECT 1`
 pour renvoyer un 503 rapide au lieu de laisser la requête pendre.
+
+---
+
+## Conversion des quittances en PDF
+
+Les quittances de loyer partent au locataire en PDF, alors que le modèle reste
+un `.docx` que le bailleur retouche lui-même. Le front remplit le modèle, puis
+poste chaque document à `POST /documents/pdf` (route protégée par le même garde
+JWT que l'envoi de mail) ; l'API le convertit avec LibreOffice et renvoie le PDF.
+
+L'image Docker embarque `libreoffice-writer` seul — pas la suite complète — avec
+la police `fonts-crosextra-carlito`, aux métriques du Calibri du modèle : sans
+elle, LibreOffice substitue une autre police et la mise en page se décale.
+
+### Mémoire et durée : le CPU est le facteur limitant, pas la RAM
+
+Mesures prises dans l'image du projet, sur une vraie quittance remplie (82 ko),
+avec les limites de production (`--memory=512m --cpus=0.25`) :
+
+| Grandeur | Valeur mesurée |
+|----------|----------------|
+| Pic mémoire du cgroup (Node + `soffice`) | ~160 Mo |
+| Durée d'une conversion à 250 mVCPU | 3,5 à 4,8 s |
+| Durée d'une conversion sans bridage CPU | ~1,1 s |
+| Taille du PDF produit | ~23 ko |
+
+**La RAM n'est pas le problème** : 160 Mo pour la conversion, auxquels s'ajoute
+l'API Node en fonctionnement — on reste largement sous les 512 Mo. Inutile de
+passer à 768 Mo tant qu'aucun redémarrage pour dépassement mémoire (OOM) n'est
+constaté.
+
+**Le CPU l'est.** À 250 mVCPU, une conversion prend 3,5 à 5 s là où elle en
+prend 1 sans bridage. Comme `DocumentsService` sérialise les conversions (deux
+LibreOffice simultanés seraient au-dessus de la limite mémoire, et se
+disputeraient un quart de cœur), une période de quatre mois demande **15 à 20 s**
+au total. C'est long, mais l'écran affiche un indicateur d'attente pendant ce
+temps. Si cela devient gênant, c'est le CPU du conteneur qu'il faut augmenter,
+pas la mémoire.
 
 ---
 

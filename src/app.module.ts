@@ -7,6 +7,7 @@ import { BailleurModule } from './bailleur/bailleur.module';
 import { CaracteristiqueModule } from './caracteristique/caracteristique.module';
 import { ChambreModule } from './chambre/chambre.module';
 import { buildTypeOrmOptions } from './database/typeorm-options';
+import { DocumentsModule } from './documents/documents.module';
 import { GenerationModule } from './generation/generation.module';
 import { HealthController } from './health/health.controller';
 import { LocataireModule } from './locataire/locataire.module';
@@ -21,6 +22,7 @@ import { MailModule } from './mail/mail.module';
     BailleurModule,
     ChambreModule,
     CaracteristiqueModule,
+    DocumentsModule,
     GenerationModule,
     LocataireModule,
     MailModule,
