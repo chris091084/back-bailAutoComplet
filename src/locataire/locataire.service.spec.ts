@@ -90,4 +90,57 @@ describe('LocataireService', () => {
       expect(locataireRepository.save).not.toHaveBeenCalled();
     });
   });
+
+  describe('marquerSortie', () => {
+    beforeEach(() => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        sortie: null,
+      } as Locataire);
+    });
+
+    it('date la sortie du logement', async () => {
+      const locataire = await service.marquerSortie(3, '2026-03-31');
+
+      expect(locataire.sortie).toBe('2026-03-31');
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 3, sortie: '2026-03-31' }),
+      );
+    });
+
+    it('refuse une date absente ou mal formée', async () => {
+      await expect(service.marquerSortie(3)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(service.marquerSortie(3, '31/03/2026')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('refuse un jour qui n’existe pas', async () => {
+      await expect(service.marquerSortie(3, '2026-02-31')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reintegrerLocataire', () => {
+    it('efface la date de sortie', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        sortie: '2026-03-31',
+      } as Locataire);
+
+      const locataire = await service.reintegrerLocataire(3);
+
+      expect(locataire.sortie).toBeNull();
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 3, sortie: null }),
+      );
+    });
+  });
 });

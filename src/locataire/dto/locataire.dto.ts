@@ -33,6 +33,12 @@ export class LocataireDto {
    * partie : c'est ce que la liste des locataires affiche.
    */
   resiliationEnvoyeeLe: string | null;
+  /**
+   * Date de sortie du logement au format « AAAA-MM-JJ », `null` si le locataire
+   * est toujours en place : c'est elle qui range la fiche dans la liste des
+   * locataires sortis.
+   */
+  sortie: string | null;
 
   constructor(locataire: Locataire) {
     this.id = locataire.id;
@@ -51,5 +57,6 @@ export class LocataireDto {
     this.resiliationEnvoyeeLe = locataire.resiliationEnvoyeeLe
       ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
       : null;
+    this.sortie = locataire.sortie ?? null;
   }
 }

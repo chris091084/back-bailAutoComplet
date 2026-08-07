@@ -1,13 +1,15 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
-  HttpCode,
   Param,
+  ParseBoolPipe,
   ParseIntPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { LocataireDto } from './dto/locataire.dto';
 import { UpsertLocataireDto } from './dto/upsert-locataire.dto';
@@ -17,9 +19,17 @@ import { LocataireService } from './locataire.service';
 export class LocataireController {
   constructor(private readonly locataireService: LocataireService) {}
 
+  /**
+   * `?sortis=true` bascule sur les locataires ayant quitté le logement. Un
+   * paramètre plutôt qu'une seconde route : c'est la même liste, filtrée sur la
+   * date de sortie.
+   */
   @Get()
-  async getAllLocataires(): Promise<LocataireDto[]> {
-    const locataires = await this.locataireService.getAllLocataires();
+  async getAllLocataires(
+    @Query('sortis', new DefaultValuePipe(false), ParseBoolPipe)
+    sortis: boolean,
+  ): Promise<LocataireDto[]> {
+    const locataires = await this.locataireService.getAllLocataires(sortis);
     return locataires.map((locataire) => new LocataireDto(locataire));
   }
 
@@ -63,6 +73,32 @@ export class LocataireController {
     );
   }
 
+  /**
+   * Sortie du logement, à la place de la suppression : un locataire parti reste
+   * une pièce du dossier de l'appartement. La date est celle saisie dans la
+   * modale, hors `updateLocataire` comme la résiliation — c'est un événement,
+   * pas un champ de la fiche.
+   */
+  @Post(':id/sortie')
+  async marquerSortie(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('sortie') sortie?: string,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(
+      await this.locataireService.marquerSortie(id, sortie),
+    );
+  }
+
+  /** Annule la sortie : le locataire retrouve la liste principale. */
+  @Delete(':id/sortie')
+  async reintegrerLocataire(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(
+      await this.locataireService.reintegrerLocataire(id),
+    );
+  }
+
   @Put(':id')
   async updateLocataire(
     @Param('id', ParseIntPipe) id: number,
@@ -71,11 +107,5 @@ export class LocataireController {
     return new LocataireDto(
       await this.locataireService.updateLocataire(id, body),
     );
-  }
-
-  @Delete(':id')
-  @HttpCode(204)
-  deleteLocataire(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.locataireService.deleteLocataire(id);
   }
 }
