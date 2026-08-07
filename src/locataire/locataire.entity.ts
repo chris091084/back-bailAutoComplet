@@ -51,4 +51,15 @@ export class Locataire {
     nullable: true,
   })
   resiliationEnvoyeeLe!: Date | null;
+
+  /**
+   * Date de départ du logement, `null` tant que le locataire est en place. Elle
+   * remplace la suppression : un locataire sorti quitte la liste principale mais
+   * garde son bail et ses quittances.
+   *
+   * Typée `string` (« AAAA-MM-JJ ») comme `ResultForm.from` : le pilote rend les
+   * colonnes `date` en chaîne, sans fuseau à réinterpréter.
+   */
+  @Column({ type: 'date', nullable: true })
+  sortie!: string | null;
 }
