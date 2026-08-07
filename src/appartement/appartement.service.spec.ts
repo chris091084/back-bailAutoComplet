@@ -7,8 +7,11 @@ import { AppartementService } from './appartement.service';
 const unAppartement = (surcharges: Partial<Appartement> = {}): Appartement =>
   ({
     id: 1,
-    name: 'Filature',
+    name: 'Filature 4D',
     adress: '56 rue de la Filature',
+    prefixeAnnexe: 'Filature',
+    aLoggia: true,
+    aGaragePoubelle: true,
     chambres: [],
     caracteristiques: [],
     irlManual: false,

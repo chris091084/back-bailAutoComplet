@@ -20,7 +20,8 @@ export class Appartement {
   })
   id!: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  /** Nom unique du logement : « Filature 4D », « 17B Chateau Gaillard »… */
+  @Column({ type: 'varchar', length: 255, unique: true })
   name!: string;
 
   @ManyToOne(() => Bailleur, { eager: true })
@@ -141,8 +142,19 @@ export class Appartement {
   @Column({ name: 'irl_manual', type: 'boolean', default: false })
   irlManual!: boolean;
 
-  @Column({ name: 'form_name', type: 'varchar', length: 255, nullable: true })
-  formName!: string | null;
+  /**
+   * Préfixe des fichiers d'annexe de `assets/docx/doc-annexe/` (« Filature »,
+   * « Chateau_Gaillard », « Rue_René »), auquel le front ajoute le numéro de
+   * chambre. Plusieurs logements d'une même résidence le partagent.
+   */
+  @Column({ name: 'prefixe_annexe', type: 'varchar', length: 255 })
+  prefixeAnnexe!: string;
+
+  @Column({ name: 'a_loggia', type: 'boolean', default: false })
+  aLoggia!: boolean;
+
+  @Column({ name: 'a_garage_poubelle', type: 'boolean', default: false })
+  aGaragePoubelle!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   etage!: string | null;

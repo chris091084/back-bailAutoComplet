@@ -60,7 +60,9 @@ export class AppartementDto {
   valIrl: string | null;
   tIrl: string | null;
   irlManual: boolean;
-  formName: string | null;
+  prefixeAnnexe: string;
+  aLoggia: boolean;
+  aGaragePoubelle: boolean;
   etage: string | null;
 
   constructor(appartement: Appartement) {
@@ -95,7 +97,9 @@ export class AppartementDto {
     this.valIrl = appartement.valIrl;
     this.tIrl = appartement.tIrl;
     this.irlManual = appartement.irlManual;
-    this.formName = appartement.formName;
+    this.prefixeAnnexe = appartement.prefixeAnnexe;
+    this.aLoggia = appartement.aLoggia;
+    this.aGaragePoubelle = appartement.aGaragePoubelle;
     this.etage = appartement.etage;
   }
 }
