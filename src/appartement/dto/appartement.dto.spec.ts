@@ -3,8 +3,11 @@ import { AppartementDto } from './appartement.dto';
 
 const appartement = {
   id: 1,
-  name: 'Filature',
+  name: 'Filature 4D',
   adress: '56 rue de la Filature',
+  prefixeAnnexe: 'Filature',
+  aLoggia: true,
+  aGaragePoubelle: true,
   bailleur: { id: 1, name: 'M. BODIN Sylvain' },
   chambres: [
     { id: 3, piece: 'Chambre 3', caracteristiqueExceptionelle: 'lit double' },
