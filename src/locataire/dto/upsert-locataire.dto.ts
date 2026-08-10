@@ -7,6 +7,13 @@ export class UpsertLocataireDto {
   prenom?: string;
   telephone?: string | null;
   email?: string | null;
+  /** Année de naissance ; `null` explicite l'efface. */
+  anneeNaissance?: number | null;
+  /**
+   * Date d'entrée au format « AAAA-MM-JJ ». Absente à la création, elle est
+   * reprise de `result_form.date_from` ; `null` explicite l'efface.
+   */
+  entree?: string | null;
   appartementId?: number;
   /**
    * `null` explicite pour détacher le locataire de son result_form ; absent, la

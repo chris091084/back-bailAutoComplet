@@ -25,6 +25,24 @@ export class Locataire {
   email!: string | null;
 
   /**
+   * Année de naissance, dont la liste tire l'âge affiché. L'année seule : le
+   * bail ne demande pas le jour de naissance. Nullable, rien ne la renseigne à
+   * la génération du bail, elle se saisit depuis la fiche.
+   */
+  @Column({ name: 'annee_naissance', type: 'int', nullable: true })
+  anneeNaissance!: number | null;
+
+  /**
+   * Date d'entrée dans le logement, reprise de `result_form.date_from` à la
+   * création. Recopiée et non lue à travers la liaison : elle se corrige sans
+   * toucher au bail généré, et survit à un détachement du result_form.
+   *
+   * Typée `string` (« AAAA-MM-JJ ») comme `sortie`, dont elle est la symétrique.
+   */
+  @Column({ type: 'date', nullable: true })
+  entree!: string | null;
+
+  /**
    * Pas de relation inverse sur Appartement : l'ajouter changerait le JSON déjà
    * renvoyé par /appartement, qui sérialise l'entité via AppartementDto.
    */
