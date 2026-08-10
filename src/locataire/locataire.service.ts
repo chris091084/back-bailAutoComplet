@@ -10,8 +10,14 @@ import { ResultForm } from '../generation/result-form.entity';
 import { UpsertLocataireDto } from './dto/upsert-locataire.dto';
 import { Locataire } from './locataire.entity';
 
-/** Une date de sortie est un jour de calendrier : « AAAA-MM-JJ », rien d'autre. */
+/** Une date d'entrée ou de sortie est un jour de calendrier : « AAAA-MM-JJ ». */
 const FORMAT_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Borne basse de l'année de naissance : au-delà d'un siècle et demi, c'est une
+ * faute de frappe, pas un locataire.
+ */
+const ANNEE_NAISSANCE_MIN = 1900;
 
 @Injectable()
 export class LocataireService {
@@ -75,13 +81,22 @@ export class LocataireService {
       );
     }
 
+    const resultForm = await this.getResultForm(details.resultFormId);
+
     const locataire = this.locataireRepository.create({
       nom: details.nom,
       prenom: details.prenom,
       telephone: details.telephone ?? null,
       email: details.email ?? null,
+      anneeNaissance: this.validerAnneeNaissance(details.anneeNaissance),
+      // Rien ne demande la date d'entrée au moment de générer le bail : elle
+      // est reprise de sa date de prise d'effet, à défaut d'être fournie.
+      entree:
+        details.entree !== undefined
+          ? this.validerDate(details.entree, 'entree')
+          : (resultForm?.from ?? null),
       appartement: await this.getAppartement(details.appartementId),
-      resultForm: await this.getResultForm(details.resultFormId),
+      resultForm,
     });
 
     return this.locataireRepository.save(locataire);
@@ -104,6 +119,16 @@ export class LocataireService {
     }
     if (details.email !== undefined) {
       locataire.email = details.email;
+    }
+    // `!== undefined` : un `null` explicite efface l'année ou la date d'entrée,
+    // toutes deux facultatives sur la fiche.
+    if (details.anneeNaissance !== undefined) {
+      locataire.anneeNaissance = this.validerAnneeNaissance(
+        details.anneeNaissance,
+      );
+    }
+    if (details.entree !== undefined) {
+      locataire.entree = this.validerDate(details.entree, 'entree');
     }
     if (details.appartementId != null) {
       locataire.appartement = await this.getAppartement(details.appartementId);
@@ -143,7 +168,14 @@ export class LocataireService {
    */
   async marquerSortie(id: number, sortie?: string): Promise<Locataire> {
     const locataire = await this.getLocataireById(id);
-    locataire.sortie = this.validerDateSortie(sortie);
+
+    if (!sortie) {
+      throw new BadRequestException(
+        'sortie est obligatoire et doit être au format AAAA-MM-JJ',
+      );
+    }
+
+    locataire.sortie = this.validerDate(sortie, 'sortie');
 
     return this.locataireRepository.save(locataire);
   }
@@ -164,20 +196,51 @@ export class LocataireService {
    * `new Date` seul accepte n'importe quelle chaîne interprétable : le format
    * est donc vérifié avant, puis la date elle-même, un 2026-02-31 passant le
    * gabarit sans exister.
+   *
+   * `null` traverse : entrée comme sortie sont des champs facultatifs, c'est à
+   * l'appelant d'exiger une valeur quand elle l'est.
    */
-  private validerDateSortie(sortie?: string): string {
-    if (!sortie || !FORMAT_DATE.test(sortie)) {
+  private validerDate(valeur: string | null, champ: string): string | null {
+    if (valeur == null) {
+      return null;
+    }
+
+    if (!FORMAT_DATE.test(valeur)) {
       throw new BadRequestException(
-        'sortie est obligatoire et doit être au format AAAA-MM-JJ',
+        `${champ} doit être au format AAAA-MM-JJ : ${valeur}`,
       );
     }
 
-    const date = new Date(`${sortie}T00:00:00Z`);
-    if (Number.isNaN(date.getTime()) || !date.toISOString().startsWith(sortie)) {
-      throw new BadRequestException(`Date de sortie invalide : ${sortie}`);
+    const date = new Date(`${valeur}T00:00:00Z`);
+    if (Number.isNaN(date.getTime()) || !date.toISOString().startsWith(valeur)) {
+      throw new BadRequestException(`Date invalide pour ${champ} : ${valeur}`);
     }
 
-    return sortie;
+    return valeur;
+  }
+
+  /**
+   * Une année pleine, dans les bornes du vraisemblable : c'est l'âge affiché
+   * dans la liste qui en dépend, une saisie à côté (un « 25 » pour l'âge, une
+   * date collée) doit être refusée plutôt qu'affichée.
+   */
+  private validerAnneeNaissance(annee?: number | null): number | null {
+    if (annee == null) {
+      return null;
+    }
+
+    const anneeCourante = new Date().getFullYear();
+    if (
+      !Number.isInteger(annee) ||
+      annee < ANNEE_NAISSANCE_MIN ||
+      annee > anneeCourante
+    ) {
+      throw new BadRequestException(
+        `anneeNaissance doit être une année entre ${ANNEE_NAISSANCE_MIN} et ${anneeCourante} : ${annee}`,
+      );
+    }
+
+    return annee;
   }
 
   /**

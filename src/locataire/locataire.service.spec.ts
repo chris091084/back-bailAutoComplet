@@ -63,6 +63,65 @@ describe('LocataireService', () => {
         expect.objectContaining({ resultForm: { id: 7 } }),
       );
     });
+
+    it('reprend la date d’entrée sur la prise d’effet du bail', async () => {
+      resultFormRepository.findOneBy.mockResolvedValue({
+        id: 7,
+        from: '2026-01-15',
+      } as ResultForm);
+
+      await service.createLocataire({
+        nom: 'Dupont',
+        prenom: 'Jean',
+        appartementId: 1,
+        resultFormId: 7,
+      });
+
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ entree: '2026-01-15' }),
+      );
+    });
+
+    it('refuse une année de naissance hors bornes', async () => {
+      await expect(
+        service.createLocataire({
+          nom: 'Dupont',
+          prenom: 'Jean',
+          appartementId: 1,
+          resultFormId: 7,
+          anneeNaissance: 25,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateLocataire', () => {
+    it('corrige la date d’entrée sans toucher au bail', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        entree: '2026-01-15',
+      } as Locataire);
+
+      const locataire = await service.updateLocataire(3, {
+        entree: '2026-02-01',
+        anneeNaissance: 1998,
+      });
+
+      expect(locataire.entree).toBe('2026-02-01');
+      expect(locataire.anneeNaissance).toBe(1998);
+    });
+
+    it('refuse une date d’entrée mal formée', async () => {
+      locataireRepository.findOne.mockResolvedValue({ id: 3 } as Locataire);
+
+      await expect(
+        service.updateLocataire(3, { entree: '01/02/2026' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   describe('marquerResiliationEnvoyee', () => {
