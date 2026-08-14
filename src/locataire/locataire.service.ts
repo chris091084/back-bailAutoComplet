@@ -14,10 +14,10 @@ import { Locataire } from './locataire.entity';
 const FORMAT_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Borne basse de l'année de naissance : au-delà d'un siècle et demi, c'est une
+ * Borne basse de la date de naissance : au-delà d'un siècle et demi, c'est une
  * faute de frappe, pas un locataire.
  */
-const ANNEE_NAISSANCE_MIN = 1900;
+const DATE_NAISSANCE_MIN = '1900-01-01';
 
 @Injectable()
 export class LocataireService {
@@ -88,7 +88,8 @@ export class LocataireService {
       prenom: details.prenom,
       telephone: details.telephone ?? null,
       email: details.email ?? null,
-      anneeNaissance: this.validerAnneeNaissance(details.anneeNaissance),
+      dateNaissance: this.validerDateNaissance(details.dateNaissance),
+      profession: details.profession || null,
       // Rien ne demande la date d'entrée au moment de générer le bail : elle
       // est reprise de sa date de prise d'effet, à défaut d'être fournie.
       entree:
@@ -120,15 +121,18 @@ export class LocataireService {
     if (details.email !== undefined) {
       locataire.email = details.email;
     }
-    // `!== undefined` : un `null` explicite efface l'année ou la date d'entrée,
-    // toutes deux facultatives sur la fiche.
-    if (details.anneeNaissance !== undefined) {
-      locataire.anneeNaissance = this.validerAnneeNaissance(
-        details.anneeNaissance,
+    // `!== undefined` : un `null` explicite efface la date de naissance ou
+    // celle d'entrée, toutes deux facultatives sur la fiche.
+    if (details.dateNaissance !== undefined) {
+      locataire.dateNaissance = this.validerDateNaissance(
+        details.dateNaissance,
       );
     }
     if (details.entree !== undefined) {
       locataire.entree = this.validerDate(details.entree, 'entree');
+    }
+    if (details.profession !== undefined) {
+      locataire.profession = details.profession;
     }
     if (details.appartementId != null) {
       locataire.appartement = await this.getAppartement(details.appartementId);
@@ -220,27 +224,27 @@ export class LocataireService {
   }
 
   /**
-   * Une année pleine, dans les bornes du vraisemblable : c'est l'âge affiché
-   * dans la liste qui en dépend, une saisie à côté (un « 25 » pour l'âge, une
-   * date collée) doit être refusée plutôt qu'affichée.
+   * Une date de calendrier, dans les bornes du vraisemblable : c'est l'âge
+   * affiché dans la liste qui en dépend, une saisie à côté (un millésime tapé
+   * de travers, une date à venir) doit être refusée plutôt qu'affichée.
+   *
+   * La comparaison se fait sur les chaînes « AAAA-MM-JJ », que leur format à
+   * champs fixes range dans l'ordre chronologique.
    */
-  private validerAnneeNaissance(annee?: number | null): number | null {
-    if (annee == null) {
+  private validerDateNaissance(date?: string | null): string | null {
+    const valeur = this.validerDate(date ?? null, 'dateNaissance');
+    if (valeur == null) {
       return null;
     }
 
-    const anneeCourante = new Date().getFullYear();
-    if (
-      !Number.isInteger(annee) ||
-      annee < ANNEE_NAISSANCE_MIN ||
-      annee > anneeCourante
-    ) {
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    if (valeur < DATE_NAISSANCE_MIN || valeur > aujourdhui) {
       throw new BadRequestException(
-        `anneeNaissance doit être une année entre ${ANNEE_NAISSANCE_MIN} et ${anneeCourante} : ${annee}`,
+        `dateNaissance doit être comprise entre ${DATE_NAISSANCE_MIN} et ${aujourdhui} : ${valeur}`,
       );
     }
 
-    return annee;
+    return valeur;
   }
 
   /**

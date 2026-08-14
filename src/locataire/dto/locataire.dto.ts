@@ -11,8 +11,13 @@ export class LocataireDto {
   prenom: string;
   telephone: string | null;
   email: string | null;
-  /** Année de naissance, dont le front tire l'âge affiché dans la liste. */
-  anneeNaissance: number | null;
+  /**
+   * Date de naissance au format « AAAA-MM-JJ », dont le front tire l'âge
+   * affiché dans la liste.
+   */
+  dateNaissance: string | null;
+  /** Profession du locataire, saisie au formulaire de bail ou sur la fiche. */
+  profession: string | null;
   /**
    * Date d'entrée dans le logement au format « AAAA-MM-JJ », reprise de
    * `result_form.date_from` à la création puis modifiable sur la fiche.
@@ -53,7 +58,8 @@ export class LocataireDto {
     this.prenom = locataire.prenom;
     this.telephone = locataire.telephone;
     this.email = locataire.email;
-    this.anneeNaissance = locataire.anneeNaissance ?? null;
+    this.dateNaissance = locataire.dateNaissance ?? null;
+    this.profession = locataire.profession ?? null;
     this.entree = locataire.entree ?? null;
     this.appartementId = locataire.appartement?.id ?? null;
     this.appartementNom = locataire.appartement?.name ?? null;
