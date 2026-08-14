@@ -25,12 +25,21 @@ export class Locataire {
   email!: string | null;
 
   /**
-   * Année de naissance, dont la liste tire l'âge affiché. L'année seule : le
-   * bail ne demande pas le jour de naissance. Nullable, rien ne la renseigne à
-   * la génération du bail, elle se saisit depuis la fiche.
+   * Date de naissance, dont la liste tire l'âge affiché. Nullable, rien ne la
+   * renseigne à la génération du bail, elle se saisit depuis la fiche.
+   *
+   * Typée `string` (« AAAA-MM-JJ ») comme `entree` et `sortie` : le pilote rend
+   * les colonnes `date` en chaîne, sans fuseau à réinterpréter.
    */
-  @Column({ name: 'annee_naissance', type: 'int', nullable: true })
-  anneeNaissance!: number | null;
+  @Column({ name: 'date_naissance', type: 'date', nullable: true })
+  dateNaissance!: string | null;
+
+  /**
+   * Profession du locataire, saisie au formulaire de bail avec sa date de
+   * naissance. Nullable, comme tout ce que la fiche ne rend pas obligatoire.
+   */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  profession!: string | null;
 
   /**
    * Date d'entrée dans le logement, reprise de `result_form.date_from` à la

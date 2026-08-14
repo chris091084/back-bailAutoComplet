@@ -40,4 +40,4 @@ export class AddAnneeNaissanceAndEntreeToLocataire1700000038000
         DROP COLUMN "entree"
     `);
   }
-}
+} 

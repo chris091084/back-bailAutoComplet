@@ -82,14 +82,14 @@ describe('LocataireService', () => {
       );
     });
 
-    it('refuse une année de naissance hors bornes', async () => {
+    it('refuse une date de naissance hors bornes', async () => {
       await expect(
         service.createLocataire({
           nom: 'Dupont',
           prenom: 'Jean',
           appartementId: 1,
           resultFormId: 7,
-          anneeNaissance: 25,
+          dateNaissance: '1899-12-31',
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
 
@@ -106,11 +106,11 @@ describe('LocataireService', () => {
 
       const locataire = await service.updateLocataire(3, {
         entree: '2026-02-01',
-        anneeNaissance: 1998,
+        dateNaissance: '1998-03-12',
       });
 
       expect(locataire.entree).toBe('2026-02-01');
-      expect(locataire.anneeNaissance).toBe(1998);
+      expect(locataire.dateNaissance).toBe('1998-03-12');
     });
 
     it('refuse une date d’entrée mal formée', async () => {
