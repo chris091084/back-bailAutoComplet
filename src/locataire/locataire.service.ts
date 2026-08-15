@@ -34,13 +34,17 @@ export class LocataireService {
    * Les deux listes de l'écran locataires, séparées par la seule date de
    * sortie : les locataires en place par défaut, les sortis sur demande. Les
    * sortis arrivent du départ le plus récent au plus ancien, c'est celui qu'on
-   * vient de saisir qu'on relit.
+   * vient de saisir qu'on relit. Les locataires en place suivent la même
+   * logique sur l'entrée : le dernier arrivé en tête, ceux sans date d'entrée
+   * renseignée en fin de liste.
    */
   getAllLocataires(sortis = false): Promise<Locataire[]> {
     return this.locataireRepository.find({
       where: { sortie: sortis ? Not(IsNull()) : IsNull() },
       relations: { appartement: true, resultForm: true },
-      order: sortis ? { sortie: 'DESC', id: 'ASC' } : { id: 'ASC' },
+      order: sortis
+        ? { sortie: 'DESC', id: 'ASC' }
+        : { entree: { direction: 'DESC', nulls: 'LAST' }, id: 'DESC' },
     });
   }
 
