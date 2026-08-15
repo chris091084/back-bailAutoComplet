@@ -1,3 +1,11 @@
+### Node / NestJS ###
+node_modules/
+dist/
+coverage/
+.env
+*.tsbuildinfo
+
+### Maven (legacy) ###
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
