@@ -41,7 +41,7 @@ export class LocataireService {
   getAllLocataires(sortis = false): Promise<Locataire[]> {
     return this.locataireRepository.find({
       where: { sortie: sortis ? Not(IsNull()) : IsNull() },
-      relations: { appartement: true, resultForm: true },
+      relations: { appartement: { chambres: true }, resultForm: true },
       order: sortis
         ? { sortie: 'DESC', id: 'ASC' }
         : { entree: { direction: 'DESC', nulls: 'LAST' }, id: 'DESC' },
@@ -51,7 +51,7 @@ export class LocataireService {
   async getLocataireById(id: number): Promise<Locataire> {
     const locataire = await this.locataireRepository.findOne({
       where: { id },
-      relations: { appartement: true, resultForm: true },
+      relations: { appartement: { chambres: true }, resultForm: true },
     });
 
     if (!locataire) {
@@ -64,7 +64,7 @@ export class LocataireService {
   findByAppartementId(appartementId: number): Promise<Locataire[]> {
     return this.locataireRepository.find({
       where: { appartement: { id: appartementId } },
-      relations: { appartement: true, resultForm: true },
+      relations: { appartement: { chambres: true }, resultForm: true },
       order: { id: 'ASC' },
     });
   }
