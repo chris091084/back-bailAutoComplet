@@ -31,6 +31,7 @@ export class ChambreService {
       piece: details.piece,
       caracteristiqueExceptionelle:
         details.caracteristiqueExceptionelle ?? null,
+      couleur: details.couleur ?? null,
       appartement:
         details.appartementId != null
           ? ({ id: details.appartementId } as Appartement)
@@ -48,6 +49,9 @@ export class ChambreService {
     }
     if (details.appartementId != null) {
       chambre.appartement = { id: details.appartementId } as Appartement;
+    }
+    if (details.couleur !== undefined) {
+      chambre.couleur = details.couleur ?? null;
     }
 
     return this.chambreRepository.save(chambre);

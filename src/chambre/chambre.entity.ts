@@ -30,4 +30,7 @@ export class Chambre {
     nullable: true,
   })
   caracteristiqueExceptionelle!: string | null;
+
+  @Column({ type: 'varchar', length: 7, nullable: true })
+  couleur!: string | null;
 }

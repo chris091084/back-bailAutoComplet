@@ -7,10 +7,12 @@ import { Appartement } from '../appartement.entity';
 export class ChambreDto {
   id: number;
   piece: string;
+  couleur: string | null;
 
   constructor(chambre: Chambre) {
     this.id = chambre.id;
     this.piece = chambre.piece;
+    this.couleur = chambre.couleur;
   }
 }
 

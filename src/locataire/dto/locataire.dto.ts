@@ -51,6 +51,17 @@ export class LocataireDto {
    * locataires sortis.
    */
   sortie: string | null;
+  /**
+   * Nom de la pièce issue du bail rattaché (`result_form.room`). `null` si
+   * aucun result_form n'est rattaché. Lecture seule.
+   */
+  chambre: string | null;
+  /**
+   * Code couleur CSS de la chambre correspondant à ce nom de pièce dans
+   * l'appartement du locataire. `null` si la chambre n'a pas de couleur ou si
+   * aucun result_form n'est rattaché. Lecture seule.
+   */
+  chambreCouleur: string | null;
 
   constructor(locataire: Locataire) {
     this.id = locataire.id;
@@ -73,5 +84,10 @@ export class LocataireDto {
       ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
       : null;
     this.sortie = locataire.sortie ?? null;
+    this.chambre = locataire.resultForm?.room ?? null;
+    const chambreEntity = this.chambre
+      ? locataire.appartement?.chambres?.find((c) => c.piece === this.chambre)
+      : undefined;
+    this.chambreCouleur = chambreEntity?.couleur ?? null;
   }
 }
