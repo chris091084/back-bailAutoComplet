@@ -5,7 +5,7 @@ import {
   Delete,
   Get,
   Param,
-  ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   Post,
   Put,
@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { LocataireDto } from './dto/locataire.dto';
 import { UpsertLocataireDto } from './dto/upsert-locataire.dto';
+import { EtatLocataire } from './locataire-etat.enum';
 import { LocataireService } from './locataire.service';
 
 @Controller('locataire')
@@ -20,16 +21,24 @@ export class LocataireController {
   constructor(private readonly locataireService: LocataireService) {}
 
   /**
-   * `?sortis=true` bascule sur les locataires ayant quitté le logement. Un
-   * paramètre plutôt qu'une seconde route : c'est la même liste, filtrée sur la
-   * date de sortie.
+   * `?etat=candidat|locataire|sorti` choisit l'onglet servi. Un paramètre
+   * plutôt qu'une route par état : c'est la même liste, filtrée.
+   *
+   * Le défaut reste les locataires en place, ce qu'attend tout appel nu — dont
+   * celui de la page appartements, qui n'a ainsi à compter ni les candidats ni
+   * les sortis dans l'occupation d'un logement. Un état inconnu vaut 400, le
+   * front n'en formant aucun à la main.
    */
   @Get()
   async getAllLocataires(
-    @Query('sortis', new DefaultValuePipe(false), ParseBoolPipe)
-    sortis: boolean,
+    @Query(
+      'etat',
+      new DefaultValuePipe(EtatLocataire.LOCATAIRE),
+      new ParseEnumPipe(EtatLocataire),
+    )
+    etat: EtatLocataire,
   ): Promise<LocataireDto[]> {
-    const locataires = await this.locataireService.getAllLocataires(sortis);
+    const locataires = await this.locataireService.getAllLocataires(etat);
     return locataires.map((locataire) => new LocataireDto(locataire));
   }
 
@@ -58,6 +67,19 @@ export class LocataireController {
     @Body() body: UpsertLocataireDto,
   ): Promise<LocataireDto> {
     return new LocataireDto(await this.locataireService.createLocataire(body));
+  }
+
+  /**
+   * Signature du bail : le candidat passe locataire et rejoint la liste
+   * principale. Une route-événement comme la résiliation et la sortie, et non
+   * un champ de `PUT /:id` — c'est un fait constaté, hors de portée de la
+   * modale d'édition.
+   */
+  @Post(':id/signature')
+  async signerBail(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(await this.locataireService.signerBail(id));
   }
 
   /**

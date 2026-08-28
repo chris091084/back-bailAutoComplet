@@ -4,10 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { FindOptionsOrder, Repository } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
 import { ResultForm } from '../generation/result-form.entity';
 import { UpsertLocataireDto } from './dto/upsert-locataire.dto';
+import { EtatLocataire } from './locataire-etat.enum';
 import { Locataire } from './locataire.entity';
 
 /** Une date d'entrée ou de sortie est un jour de calendrier : « AAAA-MM-JJ ». */
@@ -31,20 +32,27 @@ export class LocataireService {
   ) {}
 
   /**
-   * Les deux listes de l'écran locataires, séparées par la seule date de
-   * sortie : les locataires en place par défaut, les sortis sur demande. Les
-   * sortis arrivent du départ le plus récent au plus ancien, c'est celui qu'on
-   * vient de saisir qu'on relit. Les locataires en place suivent la même
-   * logique sur l'entrée : le dernier arrivé en tête, ceux sans date d'entrée
-   * renseignée en fin de liste.
+   * Les trois listes de l'écran locataires, une par état. Chacune se lit à
+   * l'endroit où on l'a laissée : les sortis du départ le plus récent au plus
+   * ancien, c'est celui qu'on vient de saisir qu'on relit ; les locataires en
+   * place suivent la même logique sur l'entrée, ceux sans date renseignée en
+   * fin de liste ; les candidats par id décroissant, le dernier bail généré en
+   * tête, aucune date ne les distinguant encore.
    */
-  getAllLocataires(sortis = false): Promise<Locataire[]> {
+  getAllLocataires(etat = EtatLocataire.LOCATAIRE): Promise<Locataire[]> {
+    const tris: Record<EtatLocataire, FindOptionsOrder<Locataire>> = {
+      [EtatLocataire.CANDIDAT]: { id: 'DESC' },
+      [EtatLocataire.LOCATAIRE]: {
+        entree: { direction: 'DESC', nulls: 'LAST' },
+        id: 'DESC',
+      },
+      [EtatLocataire.SORTI]: { sortie: 'DESC', id: 'ASC' },
+    };
+
     return this.locataireRepository.find({
-      where: { sortie: sortis ? Not(IsNull()) : IsNull() },
+      where: { etat },
       relations: { appartement: { chambres: true }, resultForm: true },
-      order: sortis
-        ? { sortie: 'DESC', id: 'ASC' }
-        : { entree: { direction: 'DESC', nulls: 'LAST' }, id: 'DESC' },
+      order: tris[etat],
     });
   }
 
@@ -73,6 +81,9 @@ export class LocataireService {
    * Un locataire n'existe que par le bail dont il est issu : `resultFormId` est
    * donc obligatoire à la création, ce qui ferme la saisie manuelle depuis la
    * liste des locataires. La modification, elle, reste libre.
+   *
+   * La fiche naît `candidat` : générer un bail ne fait pas encore un occupant,
+   * c'est la signature qui la fait passer locataire.
    */
   async createLocataire(details: UpsertLocataireDto): Promise<Locataire> {
     if (!details.nom || !details.prenom) {
@@ -102,6 +113,7 @@ export class LocataireService {
           : (resultForm?.from ?? null),
       appartement: await this.getAppartement(details.appartementId),
       resultForm,
+      etat: EtatLocataire.CANDIDAT,
     });
 
     return this.locataireRepository.save(locataire);
@@ -151,6 +163,31 @@ export class LocataireService {
   }
 
   /**
+   * Le bail est signé : le candidat devient locataire, et sa fiche gagne les
+   * actions qui n'avaient pas de sens avant — quittance, congé, sortie.
+   *
+   * Hors d'`updateLocataire` comme la résiliation et la sortie : c'est un fait
+   * constaté, pas un champ que la modale d'édition doit pouvoir écraser.
+   *
+   * La transition ne part que de `candidat`. Signer deux fois, ou signer une
+   * fiche déjà sortie, n'est pas un raccourci mais une méprise : autant la
+   * refuser que rendre un état incohérent avec la liste d'où vient le clic.
+   */
+  async signerBail(id: number): Promise<Locataire> {
+    const locataire = await this.getLocataireById(id);
+
+    if (locataire.etat !== EtatLocataire.CANDIDAT) {
+      throw new BadRequestException(
+        `Seul un candidat peut être passé en locataire : cette fiche est déjà « ${locataire.etat} »`,
+      );
+    }
+
+    locataire.etat = EtatLocataire.LOCATAIRE;
+
+    return this.locataireRepository.save(locataire);
+  }
+
+  /**
    * Horodate l'envoi de la lettre de congé. Volontairement hors d'
    * `updateLocataire` : c'est un fait constaté après l'envoi du mail, pas un
    * champ que la modale d'édition doit pouvoir écraser.
@@ -173,6 +210,9 @@ export class LocataireService {
    * La date vient du front et non de l'horloge : un départ se déclare souvent
    * après coup, parfois à l'avance. Une sortie déjà posée est simplement
    * corrigée par une nouvelle.
+   *
+   * L'état part avec la date : c'est lui qui range désormais la fiche, la date
+   * ne fait plus que dire quel jour.
    */
   async marquerSortie(id: number, sortie?: string): Promise<Locataire> {
     const locataire = await this.getLocataireById(id);
@@ -183,7 +223,16 @@ export class LocataireService {
       );
     }
 
+    // On ne quitte pas un logement où l'on n'est jamais entré : un candidat
+    // n'a pas de bail signé, donc rien dont sortir.
+    if (locataire.etat === EtatLocataire.CANDIDAT) {
+      throw new BadRequestException(
+        "Un candidat ne peut pas sortir du logement : son bail n'est pas signé",
+      );
+    }
+
     locataire.sortie = this.validerDate(sortie, 'sortie');
+    locataire.etat = EtatLocataire.SORTI;
 
     return this.locataireRepository.save(locataire);
   }
@@ -192,10 +241,14 @@ export class LocataireService {
    * Réintègre un locataire sorti : la date de sortie tombe, la fiche revient
    * dans la liste principale telle qu'elle l'avait quittée. C'est la sortie de
    * secours d'une date saisie par erreur.
+   *
+   * Elle revient `locataire` et jamais `candidat` : son bail est signé, c'est
+   * le départ qu'on annule, pas la signature.
    */
   async reintegrerLocataire(id: number): Promise<Locataire> {
     const locataire = await this.getLocataireById(id);
     locataire.sortie = null;
+    locataire.etat = EtatLocataire.LOCATAIRE;
 
     return this.locataireRepository.save(locataire);
   }

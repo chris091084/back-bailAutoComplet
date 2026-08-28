@@ -1,3 +1,4 @@
+import { EtatLocataire } from '../locataire-etat.enum';
 import { Locataire } from '../locataire.entity';
 
 /**
@@ -23,6 +24,12 @@ export class LocataireDto {
    * `result_form.date_from` à la création puis modifiable sur la fiche.
    */
   entree: string | null;
+  /**
+   * L'état de la fiche, qui décide de l'onglet où elle s'affiche et des actions
+   * qu'elle offre. Lecture seule : il se change par `POST /:id/signature`,
+   * `POST /:id/sortie` ou `DELETE /:id/sortie`, jamais par `PUT /:id`.
+   */
+  etat: EtatLocataire;
   appartementId: number | null;
   appartementNom: string | null;
   resultFormId: number | null;
@@ -72,6 +79,7 @@ export class LocataireDto {
     this.dateNaissance = locataire.dateNaissance ?? null;
     this.profession = locataire.profession ?? null;
     this.entree = locataire.entree ?? null;
+    this.etat = locataire.etat;
     this.appartementId = locataire.appartement?.id ?? null;
     this.appartementNom = locataire.appartement?.name ?? null;
     this.resultFormId = locataire.resultForm?.id ?? null;
