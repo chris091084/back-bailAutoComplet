@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
 import { ResultForm } from '../generation/result-form.entity';
+import { EtatLocataire } from './locataire-etat.enum';
 import { Locataire } from './locataire.entity';
 import { LocataireService } from './locataire.service';
 
@@ -82,6 +83,19 @@ describe('LocataireService', () => {
       );
     });
 
+    it('crée la fiche à l’état candidat', async () => {
+      await service.createLocataire({
+        nom: 'Dupont',
+        prenom: 'Jean',
+        appartementId: 1,
+        resultFormId: 7,
+      });
+
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ etat: EtatLocataire.CANDIDAT }),
+      );
+    });
+
     it('refuse une date de naissance hors bornes', async () => {
       await expect(
         service.createLocataire({
@@ -124,6 +138,67 @@ describe('LocataireService', () => {
     });
   });
 
+  describe('getAllLocataires', () => {
+    it('sert la liste de l’état demandé', async () => {
+      locataireRepository.find.mockResolvedValue([]);
+
+      await service.getAllLocataires(EtatLocataire.CANDIDAT);
+
+      expect(locataireRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { etat: EtatLocataire.CANDIDAT } }),
+      );
+    });
+
+    it('sert les locataires en place par défaut', async () => {
+      locataireRepository.find.mockResolvedValue([]);
+
+      await service.getAllLocataires();
+
+      expect(locataireRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { etat: EtatLocataire.LOCATAIRE } }),
+      );
+    });
+  });
+
+  describe('signerBail', () => {
+    it('passe le candidat en locataire', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.CANDIDAT,
+      } as Locataire);
+
+      const locataire = await service.signerBail(3);
+
+      expect(locataire.etat).toBe(EtatLocataire.LOCATAIRE);
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 3, etat: EtatLocataire.LOCATAIRE }),
+      );
+    });
+
+    it('refuse une fiche qui n’est plus candidate', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.LOCATAIRE,
+      } as Locataire);
+
+      await expect(service.signerBail(3)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('refuse un locataire inconnu', async () => {
+      locataireRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.signerBail(404)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
   describe('marquerResiliationEnvoyee', () => {
     it('horodate l’envoi de la lettre de congé', async () => {
       locataireRepository.findOne.mockResolvedValue({
@@ -155,16 +230,36 @@ describe('LocataireService', () => {
       locataireRepository.findOne.mockResolvedValue({
         id: 3,
         sortie: null,
+        etat: EtatLocataire.LOCATAIRE,
       } as Locataire);
     });
 
-    it('date la sortie du logement', async () => {
+    it('date la sortie du logement et passe la fiche à l’état sorti', async () => {
       const locataire = await service.marquerSortie(3, '2026-03-31');
 
       expect(locataire.sortie).toBe('2026-03-31');
+      expect(locataire.etat).toBe(EtatLocataire.SORTI);
       expect(locataireRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 3, sortie: '2026-03-31' }),
+        expect.objectContaining({
+          id: 3,
+          sortie: '2026-03-31',
+          etat: EtatLocataire.SORTI,
+        }),
       );
+    });
+
+    it('refuse de sortir un candidat, qui n’est jamais entré', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        sortie: null,
+        etat: EtatLocataire.CANDIDAT,
+      } as Locataire);
+
+      await expect(
+        service.marquerSortie(3, '2026-03-31'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(locataireRepository.save).not.toHaveBeenCalled();
     });
 
     it('refuse une date absente ou mal formée', async () => {
@@ -188,17 +283,23 @@ describe('LocataireService', () => {
   });
 
   describe('reintegrerLocataire', () => {
-    it('efface la date de sortie', async () => {
+    it('efface la date de sortie et rend un locataire, jamais un candidat', async () => {
       locataireRepository.findOne.mockResolvedValue({
         id: 3,
         sortie: '2026-03-31',
+        etat: EtatLocataire.SORTI,
       } as Locataire);
 
       const locataire = await service.reintegrerLocataire(3);
 
       expect(locataire.sortie).toBeNull();
+      expect(locataire.etat).toBe(EtatLocataire.LOCATAIRE);
       expect(locataireRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 3, sortie: null }),
+        expect.objectContaining({
+          id: 3,
+          sortie: null,
+          etat: EtatLocataire.LOCATAIRE,
+        }),
       );
     });
   });

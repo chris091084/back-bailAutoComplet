@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
 import { numericTransformer } from '../common/numeric.transformer';
 import { ResultForm } from '../generation/result-form.entity';
+import { EtatLocataire } from './locataire-etat.enum';
 
 @Entity('locataire')
 export class Locataire {
@@ -52,6 +53,19 @@ export class Locataire {
   entree!: string | null;
 
   /**
+   * Où en est la fiche dans son cycle de vie. Une fiche naît `candidat` : le
+   * bail est généré, rien n'est signé. La signature la passe `locataire`, le
+   * départ la passe `sorti`.
+   *
+   * C'est la seule source de vérité de l'état, `sortie` n'étant plus que la
+   * date du départ : les transitions écrivent les deux, et rien ne déduit plus
+   * l'état d'une date. Volontairement absent d'`UpsertLocataireDto` — il se
+   * change par les routes-événements, jamais par la modale d'édition.
+   */
+  @Column({ type: 'varchar', length: 20, default: EtatLocataire.CANDIDAT })
+  etat!: EtatLocataire;
+
+  /**
    * Pas de relation inverse sur Appartement : l'ajouter changerait le JSON déjà
    * renvoyé par /appartement, qui sérialise l'entité via AppartementDto.
    */
@@ -83,6 +97,9 @@ export class Locataire {
    * Date de départ du logement, `null` tant que le locataire est en place. Elle
    * remplace la suppression : un locataire sorti quitte la liste principale mais
    * garde son bail et ses quittances.
+   *
+   * Depuis l'ajout d'`etat`, elle ne range plus la fiche : c'est une date de
+   * détail, écrite en même temps que le passage à `sorti`.
    *
    * Typée `string` (« AAAA-MM-JJ ») comme `ResultForm.from` : le pilote rend les
    * colonnes `date` en chaîne, sans fuseau à réinterpréter.
