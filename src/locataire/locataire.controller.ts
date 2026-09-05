@@ -83,6 +83,17 @@ export class LocataireController {
   }
 
   /**
+   * Appelé par le front une fois le projet de bail effectivement envoyé, sur le
+   * même principe que `:id/resiliation` : la date suit ce qui est parti.
+   */
+  @Post(':id/bail')
+  async marquerBailEnvoye(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(await this.locataireService.marquerBailEnvoye(id));
+  }
+
+  /**
    * Appelé par le front une fois la lettre de congé effectivement envoyée : la
    * date reste ainsi cohérente avec ce qui est parti, même si le mail échoue.
    */

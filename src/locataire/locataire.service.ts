@@ -188,6 +188,21 @@ export class LocataireService {
   }
 
   /**
+   * Horodate l'envoi du projet de bail au candidat, comme
+   * `marquerResiliationEnvoyee` le fait pour la lettre de congé.
+   *
+   * Aucune contrainte d'état, contrairement à `signerBail` : un bail se renvoie
+   * après signature — le locataire a égaré la pièce jointe, une coquille a été
+   * corrigée. Un nouvel envoi écrase la date précédente.
+   */
+  async marquerBailEnvoye(id: number): Promise<Locataire> {
+    const locataire = await this.getLocataireById(id);
+    locataire.bailEnvoyeLe = new Date();
+
+    return this.locataireRepository.save(locataire);
+  }
+
+  /**
    * Horodate l'envoi de la lettre de congé. Volontairement hors d'
    * `updateLocataire` : c'est un fait constaté après l'envoi du mail, pas un
    * champ que la modale d'édition doit pouvoir écraser.
