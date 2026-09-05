@@ -48,6 +48,11 @@ export class LocataireDto {
   loyerHorsCharges: number | null;
   charges: number | null;
   /**
+   * Date d'envoi du projet de bail au format ISO, `null` si aucun n'est parti :
+   * c'est ce que la liste des candidats affiche.
+   */
+  bailEnvoyeLe: string | null;
+  /**
    * Date d'envoi de la lettre de congé au format ISO, `null` si aucune n'est
    * partie : c'est ce que la liste des locataires affiche.
    */
@@ -88,6 +93,9 @@ export class LocataireDto {
     this.charges = locataire.resultForm?.chargePrice ?? null;
     // `new Date` plutôt que `.toISOString()` directement : selon le pilote, une
     // colonne timestamptz peut remonter en chaîne plutôt qu'en Date.
+    this.bailEnvoyeLe = locataire.bailEnvoyeLe
+      ? new Date(locataire.bailEnvoyeLe).toISOString()
+      : null;
     this.resiliationEnvoyeeLe = locataire.resiliationEnvoyeeLe
       ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
       : null;
