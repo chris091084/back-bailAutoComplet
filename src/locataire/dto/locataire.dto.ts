@@ -74,6 +74,12 @@ export class LocataireDto {
    * aucun result_form n'est rattaché. Lecture seule.
    */
   chambreCouleur: string | null;
+  /**
+   * Type de garantie du bail rattaché (`result_form.garantie_type`), « Visale »
+   * ou « Garant physique ». `null` si aucun result_form n'est rattaché ou si le
+   * bail a été généré avant l'ajout du champ. Lecture seule.
+   */
+  garantieType: string | null;
 
   constructor(locataire: Locataire) {
     this.id = locataire.id;
@@ -105,5 +111,6 @@ export class LocataireDto {
       ? locataire.appartement?.chambres?.find((c) => c.piece === this.chambre)
       : undefined;
     this.chambreCouleur = chambreEntity?.couleur ?? null;
+    this.garantieType = locataire.resultForm?.garantieType ?? null;
   }
 }
