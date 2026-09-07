@@ -119,4 +119,16 @@ export class ResultForm {
     transformer: numericTransformer,
   })
   rentRefMaj!: number | null;
+
+  /**
+   * Type de garantie du bail (« Visale », « Garant physique »), repris dans le
+   * mail d'envoi du projet de bail (Annexe 2 : engagement de cautionnement).
+   */
+  @Column({
+    name: 'garantie_type',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  garantieType!: string | null;
 }

@@ -39,6 +39,7 @@ export class MailService {
         bcc,
         subject: payload.subject,
         text: payload.text,
+        html: payload.html,
         attachments: payload.attachments?.map((attachment) => ({
           filename: attachment.filename,
           content: Buffer.from(attachment.contentBase64, 'base64'),
