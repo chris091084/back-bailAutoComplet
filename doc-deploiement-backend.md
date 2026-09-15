@@ -307,6 +307,29 @@ au total. C'est long, mais l'écran affiche un indicateur d'attente pendant ce
 temps. Si cela devient gênant, c'est le CPU du conteneur qu'il faut augmenter,
 pas la mémoire.
 
+En production sur Scaleway, les logs du 14/09/2026 montrent plutôt **13 s par
+conversion** : douze quittances demandent près de 3 minutes.
+
+### Envoi par mail : une seule requête
+
+`POST /documents/envoyer` (multipart : `to`, `subject`, `text`, et jusqu'à douze
+`.docx` dans `documents`) convertit les documents puis envoie le mail, en une
+requête. Le front l'utilise pour l'envoi des quittances.
+
+Avant, le navigateur demandait chaque conversion puis le mail : un onglet
+rechargé pendant les 3 minutes (téléphone verrouillé, retour à l'accueil)
+abandonnait tout, sans mail ni erreur visible. Désormais, une fois la requête
+reçue, le serveur va au bout même si le client se déconnecte. Chaque mail parti
+laisse une ligne `Mail envoyé à …` dans les logs.
+
+Le **timeout HTTP du conteneur** (réglage Scaleway, 10 s à 60 min) doit couvrir
+douze conversions et l'envoi : 5 minutes au moins. En deçà, le front reçoit un
+504 alors que le mail part quand même ; il le signale comme tel plutôt que
+d'inviter à renvoyer.
+
+`POST /documents/pdf`, une conversion par requête, reste utilisé par le
+téléchargement des quittances, qui a besoin des PDF dans le navigateur.
+
 ---
 
 ## CI/CD automatique
