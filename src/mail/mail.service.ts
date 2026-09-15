@@ -8,6 +8,19 @@ import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { SendMailDto } from './dto/send-mail.dto';
 
+/** Pièce jointe déjà sous forme binaire, telle que le serveur la produit. */
+export interface PieceJointe {
+  filename: string;
+  content: Buffer;
+}
+
+export interface MessageMail {
+  to: string;
+  subject: string;
+  text: string;
+  attachments?: PieceJointe[];
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -21,7 +34,20 @@ export class MailService {
 
   constructor(private readonly config: ConfigService) {}
 
+  /** Envoi depuis le navigateur, pièces jointes encodées en base64. */
   async sendMail(payload: SendMailDto): Promise<void> {
+    await this.envoyer({
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+      attachments: payload.attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: Buffer.from(attachment.contentBase64, 'base64'),
+      })),
+    });
+  }
+
+  async envoyer(message: MessageMail): Promise<void> {
     const transporter = this.getTransporter();
     // Gmail refuse d'expédier au nom d'une autre adresse que celle
     // authentifiée : à défaut de MAIL_FROM, on reprend MAIL_USER.
@@ -35,25 +61,28 @@ export class MailService {
     try {
       await transporter.sendMail({
         from,
-        to: payload.to,
+        to: message.to,
         bcc,
-        subject: payload.subject,
-        text: payload.text,
-        attachments: payload.attachments?.map((attachment) => ({
-          filename: attachment.filename,
-          content: Buffer.from(attachment.contentBase64, 'base64'),
-        })),
+        subject: message.subject,
+        text: message.text,
+        attachments: message.attachments,
       });
     } catch (error) {
       // Le détail (identifiants, hôte) ne doit pas remonter au navigateur.
       this.logger.error(
-        `Échec de l'envoi du mail à ${payload.to}`,
+        `Échec de l'envoi du mail à ${message.to}`,
         error instanceof Error ? error.stack : String(error),
       );
       throw new InternalServerErrorException(
         "L'envoi du mail a échoué. Vérifiez la configuration SMTP.",
       );
     }
+
+    // Sans cette trace, les logs ne permettent pas de dire si un mail est
+    // parti : seules les conversions et les échecs y apparaissaient.
+    this.logger.log(
+      `Mail envoyé à ${message.to} (${message.attachments?.length ?? 0} pièce(s) jointe(s))`,
+    );
   }
 
   private getTransporter(): Transporter {
