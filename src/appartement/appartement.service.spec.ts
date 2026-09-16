@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { IrlService } from '../irl/irl.service';
 import { Appartement } from './appartement.entity';
@@ -256,6 +256,35 @@ describe('AppartementService', () => {
 
       // Une seule écriture : celle de l'appartement courant.
       expect(repository.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('updateAppartement', () => {
+    it('n’écrit que les loyers, nom, adresse et surface étant figés', async () => {
+      repository.findOne.mockResolvedValue(unAppartement({ id: 2 }));
+
+      await service.updateAppartement(2, {
+        id: 2,
+        name: 'Filature 4D',
+        adress: '56 rue de la Filature',
+        surface: 81.18,
+        rentRef: '10,7' as unknown as number,
+        rentRefMaj: 12.8,
+        chambres: [],
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 10.7,
+        rentRefMaj: 12.8,
+      });
+    });
+
+    it('rejette une valeur numérique invalide', async () => {
+      repository.findOne.mockResolvedValue(unAppartement({ id: 2 }));
+
+      await expect(
+        service.updateAppartement(2, { rentRef: 'abc' as unknown as number }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 

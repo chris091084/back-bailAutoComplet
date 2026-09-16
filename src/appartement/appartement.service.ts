@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IrlDto } from '../irl/dto/irl.dto';
 import { IrlService } from '../irl/irl.service';
 import { Appartement } from './appartement.entity';
 import { AppartementDto } from './dto/appartement.dto';
-import { RENT_REF, RentRefDto } from './dto/rent-ref.dto';
+import { RENT_REF, RENT_REF_MAJ, RentRefDto } from './dto/rent-ref.dto';
 import { VAL_IRL, ValIrlTIrlDto } from './dto/val-irl-tirl.dto';
 
 /**
@@ -75,6 +79,15 @@ export class AppartementService {
 
     const modifications: Partial<Appartement> = {};
 
+    // Seuls les loyers sont éditables depuis la modale du front ; nom, adresse,
+    // propriétaire et surface sont figés. Un champ absent du corps n'est pas
+    // remis à null.
+    for (const champ of ['rentRef', 'rentRefMaj'] as const) {
+      if (details[champ] !== undefined) {
+        modifications[champ] = this.versNombre(details[champ]);
+      }
+    }
+
     if (details.valIrl != null) {
       modifications.valIrl = details.valIrl;
     }
@@ -93,7 +106,35 @@ export class AppartementService {
 
     await this.appliquerModifications(id, modifications);
 
+    // Même alignement des loyers de référence que via `updateRent`.
+    if (modifications.rentRef != null) {
+      await this.syncFilatureGroup(id, {
+        idAppartement: id,
+        fieldName: RENT_REF,
+        value: modifications.rentRef,
+      });
+    }
+    if (modifications.rentRefMaj !== undefined) {
+      await this.syncFilatureGroup(id, {
+        idAppartement: id,
+        fieldName: RENT_REF_MAJ,
+        value: modifications.rentRefMaj,
+      });
+    }
+
     return new AppartementDto(await this.findOneOrFail(id));
+  }
+
+  /** Accepte un nombre ou une saisie texte (« 10,7 ») ; vide → null. */
+  private versNombre(valeur: unknown): number | null {
+    if (valeur === null || valeur === '') {
+      return null;
+    }
+    const nombre = Number(String(valeur).replace(',', '.'));
+    if (Number.isNaN(nombre)) {
+      throw new BadRequestException(`Valeur numérique invalide : ${valeur}`);
+    }
+    return nombre;
   }
 
   async deleteAppartement(id: number): Promise<void> {
