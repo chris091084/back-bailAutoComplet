@@ -45,7 +45,8 @@ export interface PasskeySummary {
 }
 
 /**
- * Passkeys utilisés comme second facteur, après le mot de passe.
+ * Passkeys : facteur de connexion unique dès qu'un est enregistré (le mot de
+ * passe n'est alors plus accepté, cf. `AuthController.login`).
  *
  * Le défi WebAuthn voyage dans un jeton signé et à durée courte, posé en cookie
  * httpOnly : aucun état serveur, donc compatible avec un déploiement serverless
@@ -109,7 +110,9 @@ export class PasskeyService {
       })),
       authenticatorSelection: {
         residentKey: 'preferred',
-        userVerification: 'preferred',
+        // Le passkey est désormais le seul facteur de connexion : il doit être
+        // déverrouillé par biométrie ou PIN, pas seulement « possédé ».
+        userVerification: 'required',
       },
     });
 
@@ -131,7 +134,7 @@ export class PasskeyService {
       expectedChallenge: challenge,
       expectedOrigin: webauthnOrigin(),
       expectedRPID: webauthnRpId(),
-      requireUserVerification: false,
+      requireUserVerification: true,
     }).catch(() => {
       throw new BadRequestException("L'enregistrement du passkey a échoué");
     });
@@ -161,7 +164,7 @@ export class PasskeyService {
     };
   }
 
-  // --- Connexion (second facteur, après le mot de passe) ---------------------
+  // --- Connexion -------------------------------------------------------------
 
   async beginAuthentication(): Promise<{
     options: PublicKeyCredentialRequestOptionsJSON;
@@ -175,7 +178,7 @@ export class PasskeyService {
         id: credential.credentialId,
         transports: this.parseTransports(credential.transports),
       })),
-      userVerification: 'preferred',
+      userVerification: 'required',
     });
 
     return {
@@ -210,9 +213,9 @@ export class PasskeyService {
         counter: stored.counter,
         transports: this.parseTransports(stored.transports),
       },
-      // Le mot de passe est déjà le premier facteur : la vérification biométrique
-      // ou par PIN n'est pas imposée, pour ne pas exclure les clés sans PIN.
-      requireUserVerification: false,
+      // Seul facteur de connexion : biométrie ou PIN obligatoire. Une clé physique
+      // sans PIN ne peut donc plus servir.
+      requireUserVerification: true,
     }).catch(() => {
       throw new UnauthorizedException('Vérification du passkey échouée');
     });

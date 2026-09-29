@@ -38,6 +38,21 @@ export class AuthAccount {
   })
   refreshTokenHash!: string | null;
 
+  /**
+   * Empreinte du dernier lien magique émis, `null` une fois consommé. Le jeton
+   * lui-même n'est jamais stocké : il n'existe que dans le mail.
+   */
+  @Column({
+    name: 'magic_link_hash',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  magicLinkHash!: string | null;
+
+  @Column({ name: 'magic_link_expires_at', type: 'timestamp', nullable: true })
+  magicLinkExpiresAt!: Date | null;
+
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt!: Date;
 }

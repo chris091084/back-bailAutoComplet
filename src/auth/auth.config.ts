@@ -39,6 +39,13 @@ export const refreshTokenSecret = (): string =>
   requireEnv('JWT_REFRESH_SECRET', 'Voir .env.example.');
 
 /**
+ * Adresse du propriétaire, seule autorisée à recevoir un lien de connexion.
+ * Absente : la connexion par lien est simplement désactivée.
+ */
+export const ownerEmail = (): string | undefined =>
+  process.env.AUTH_OWNER_EMAIL?.trim() || undefined;
+
+/**
  * `sameSite` vaut `strict` par défaut.
  *
  * Attention en production : `strict` (comme `lax`) n'envoie le cookie que si le

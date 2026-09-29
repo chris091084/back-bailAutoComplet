@@ -19,6 +19,11 @@ export interface MessageMail {
   subject: string;
   text: string;
   attachments?: PieceJointe[];
+  /**
+   * Écarte `MAIL_BCC`. Indispensable pour tout mail qui porte un secret (lien de
+   * connexion) : la copie cachée d'archivage le recevrait sinon aussi.
+   */
+  sansCopie?: boolean;
 }
 
 @Injectable()
@@ -56,7 +61,9 @@ export class MailService {
       this.config.get<string>('MAIL_USER');
     // Copie cachée systématique (archivage). Décidée ici et non par le front :
     // le navigateur ne doit pas pouvoir la retirer. Vide = pas de copie.
-    const bcc = this.config.get<string>('MAIL_BCC')?.trim() || undefined;
+    const bcc = message.sansCopie
+      ? undefined
+      : this.config.get<string>('MAIL_BCC')?.trim() || undefined;
 
     try {
       await transporter.sendMail({
