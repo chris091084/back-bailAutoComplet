@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
+  NotFoundException,
   HttpCode,
   Param,
   ParseIntPipe,
@@ -30,8 +32,10 @@ import {
 } from './auth.config';
 import { AuthService, type TokenPair } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { MagicLinkRequestDto, MagicLinkVerifyDto } from './dto/magic-link.dto';
 import { PasskeyRegistrationDto, PasskeyResponseDto } from './dto/passkey.dto';
 import { LoginThrottleService } from './login-throttle.service';
+import { MagicLinkService } from './magic-link.service';
 import {
   PASSKEY_PENDING_COOKIE,
   PASSKEY_REGISTRATION_COOKIE,
@@ -39,15 +43,6 @@ import {
 import { PasskeyService, type PasskeySummary } from './passkey.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-
-/** Réponse de `/auth/login` : soit connecté, soit en attente du passkey. */
-type LoginResponse =
-  | { authenticated: true }
-  | {
-      authenticated: false;
-      passkeyRequired: true;
-      options: PublicKeyCredentialRequestOptionsJSON;
-    };
 
 /**
  * La validation est posée ici plutôt qu'en pipe global : les DTO des modules
@@ -67,12 +62,28 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly passkeyService: PasskeyService,
     private readonly loginThrottle: LoginThrottleService,
+    private readonly magicLink: MagicLinkService,
   ) {}
 
   /**
+   * Moyens de connexion disponibles, pour que le front n'affiche que ceux qui
+   * marchent. Public : ces deux booléens ne révèlent rien d'exploitable.
+   */
+  @Get('methods')
+  async methods(): Promise<{ passkey: boolean; magicLink: boolean }> {
+    return {
+      passkey: await this.passkeyService.hasPasskeys(),
+      magicLink: this.magicLink.isEnabled(),
+    };
+  }
+
+  /**
    * Connexion par mot de passe : l'application n'a qu'un compte, il n'y a donc
-   * pas d'inscription ni d'identifiant à fournir. Si des passkeys sont
-   * enregistrés, la connexion se termine par `POST /auth/passkey/login`.
+   * pas d'inscription ni d'identifiant à fournir.
+   *
+   * Ce n'est que l'amorçage : dès qu'un passkey est enregistré, le mot de passe
+   * n'ouvre plus de session (le passkey le remplace, il ne s'y ajoute pas). Le
+   * recours en cas de perte est le lien envoyé par email.
    *
    * Le mot de passe est semé hors ligne par `npm run auth:seed` : aucune route
    * HTTP ne permet de le définir ni de le modifier.
@@ -82,32 +93,76 @@ export class AuthController {
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<LoginResponse> {
-    await this.authService.validatePassword(dto);
-
-    // Dès qu'un passkey est enregistré, le mot de passe ne suffit plus : aucun
-    // cookie de session n'est posé avant la seconde étape.
+  ): Promise<{ authenticated: true }> {
     if (await this.passkeyService.hasPasskeys()) {
-      const { options, challengeToken } =
-        await this.passkeyService.beginAuthentication();
-
-      response.cookie(
-        PASSKEY_PENDING_COOKIE,
-        challengeToken,
-        challengeCookieOptions(),
+      throw new ForbiddenException(
+        'Connexion par mot de passe désactivée : utilisez votre passkey ou le lien reçu par email',
       );
-
-      return { authenticated: false, passkeyRequired: true, options };
     }
 
+    await this.authService.validatePassword(dto);
     await this.issueAndSetCookies(response);
 
     return { authenticated: true };
   }
 
   /**
-   * Seconde étape de la connexion. Le cookie `passkey_pending` n'existe que si le
-   * mot de passe vient d'être validé : il porte le défi que le passkey doit signer.
+   * Première étape de la connexion par passkey : fournit le défi à signer. Le
+   * cookie `passkey_pending` le porte jusqu'à `POST /auth/passkey/login`.
+   */
+  @Post('passkey/login/options')
+  @HttpCode(200)
+  async passkeyLoginOptions(
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<PublicKeyCredentialRequestOptionsJSON> {
+    this.loginThrottle.assertNotLocked();
+
+    if (!(await this.passkeyService.hasPasskeys())) {
+      throw new NotFoundException('Aucun passkey enregistré');
+    }
+
+    const { options, challengeToken } =
+      await this.passkeyService.beginAuthentication();
+
+    response.cookie(
+      PASSKEY_PENDING_COOKIE,
+      challengeToken,
+      challengeCookieOptions(),
+    );
+
+    return options;
+  }
+
+  /**
+   * Demande d'un lien de connexion. La réponse est toujours la même : elle ne
+   * doit pas indiquer si l'adresse saisie est celle du propriétaire.
+   */
+  @Post('magic-link')
+  @HttpCode(200)
+  async requestMagicLink(
+    @Body() dto: MagicLinkRequestDto,
+  ): Promise<{ sent: true }> {
+    await this.magicLink.request(dto.email);
+
+    return { sent: true };
+  }
+
+  /** Consomme le lien reçu par email et ouvre la session. */
+  @Post('magic-link/verify')
+  @HttpCode(200)
+  async verifyMagicLink(
+    @Body() dto: MagicLinkVerifyDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ authenticated: true }> {
+    await this.magicLink.consume(dto.token);
+    await this.issueAndSetCookies(response);
+
+    return { authenticated: true };
+  }
+
+  /**
+   * Seconde étape de la connexion par passkey. Le cookie `passkey_pending` n'existe
+   * que si `passkey/login/options` vient d'être appelé : il porte le défi à signer.
    */
   @Post('passkey/login')
   @HttpCode(200)

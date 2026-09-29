@@ -442,31 +442,64 @@ trop court, 400 sur champ en trop, 429 à la 6ᵉ tentative, et préflight CORS
 
 ---
 
-## Passkeys (second facteur WebAuthn)
+## Passkeys et lien par email
 
-Une fois au moins un passkey enregistré, `POST /auth/login` ne suffit plus : il
-valide le mot de passe, ne pose **aucun** cookie de session et renvoie
-`{ authenticated: false, passkeyRequired: true, options }`. Le front fait signer
-`options` par l'authentificateur puis appelle `POST /auth/passkey/login`
-(`{ response }`), qui ouvre la session. Sans passkey en base, le comportement
-reste celui du mot de passe seul.
+Le mot de passe n'est que l'**amorçage**. Le régime normal est la connexion par
+passkey seul, sans mot de passe.
+
+| État | Connexion possible |
+|---|---|
+| Aucun passkey enregistré | mot de passe, ou lien par email |
+| Au moins un passkey | passkey, ou lien par email. `POST /auth/login` répond **403** : le mot de passe n'ouvre plus de session |
+
+**Enregistrer le premier passkey** : se connecter (mot de passe ou lien email), puis
+page Sécurité. Le lien par email évite d'avoir à taper le mot de passe.
+
+### Routes
 
 | Route | Protection | Rôle |
 |---|---|---|
-| `POST /auth/passkey/login` | cookie `passkey_pending` (posé par `login`) | Vérifie la signature, ouvre la session |
+| `GET /auth/methods` | publique | `{ passkey, magicLink }` : moyens de connexion disponibles |
+| `POST /auth/passkey/login/options` | publique | Défi à signer (pose le cookie `passkey_pending`). 404 si aucun passkey |
+| `POST /auth/passkey/login` | cookie `passkey_pending` | Vérifie la signature, ouvre la session (`{ response }`) |
+| `POST /auth/magic-link` | publique | `{ email }` → envoie un lien si l'adresse est `AUTH_OWNER_EMAIL`. Réponse toujours `{ sent: true }` |
+| `POST /auth/magic-link/verify` | publique | `{ token }` → consomme le lien, ouvre la session |
 | `GET /auth/passkey` | session | Liste les passkeys |
 | `POST /auth/passkey/register/options` | session | Défi d'enregistrement |
 | `POST /auth/passkey/register/verify` | session | Enregistre un passkey (`{ response, label? }`) |
 | `DELETE /auth/passkey/:id` | session | Supprime un passkey |
 
+### Lien par email
+
+- **Liste blanche d'une adresse** : `AUTH_OWNER_EMAIL`. N'importe qui peut appeler
+  la route, seule cette adresse reçoit un mail, et la réponse est identique dans
+  tous les cas (y compris en cas d'échec SMTP, qui n'est que journalisé) pour ne
+  pas révéler l'adresse autorisée. Variable absente : fonction désactivée.
+- Le mail part vers l'adresse **configurée**, jamais celle saisie, et **sans
+  `MAIL_BCC`** : la copie d'archivage recevrait sinon le lien de connexion.
+- Jeton de 256 bits aléatoires, **usage unique**, valable **15 minutes**. Seule son
+  empreinte SHA-256 est en base (`auth_account.magic_link_hash`) ; en demander un
+  nouveau invalide le précédent. Un envoi par minute au plus.
+- Le lien pointe vers `<origine du front>/login/magic#token=…` : dans le
+  fragment, il n'est ni transmis au serveur du front, ni journalisé, ni envoyé en
+  `Referer`.
+- **Sécurité résiduelle** : la boîte mail devient le recours ultime. Elle doit
+  être protégée par une 2FA.
+
+### Passkey
+
 - Seule la **clé publique** est stockée (`passkey_credential`). Le défi voyage dans
   un JWT court (5 min) en cookie httpOnly, avec un `purpose` qui interdit de
   réutiliser un défi d'enregistrement pour une connexion : aucun état serveur.
+- **Biométrie ou PIN obligatoire** (`userVerification: required`) : le passkey étant
+  le seul facteur, une clé physique sans PIN n'est plus acceptée. Un passkey
+  enregistré sur une clé de ce type doit être supprimé puis recréé.
 - Les échecs de l'étape passkey comptent dans le même anti-force brute que le mot
   de passe.
 - L'origine et le `rpID` sont ceux du **front** : déduits de `CORS_ORIGIN`, ou
   `WEBAUTHN_ORIGIN` / `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME`. Changer le `rpID`
   invalide les passkeys existants.
-- **Perte de tous les appareils** : `npm run auth:reset-passkeys` supprime les
-  passkeys et révoque les sessions ; la connexion redevient mot de passe seul, puis
-  on réenregistre depuis la page Sécurité. Enregistrez au moins deux passkeys.
+- **Perte de tous les appareils** : demander un lien par email, puis enregistrer un
+  nouveau passkey. Si le mail est inaccessible aussi, `npm run auth:reset-passkeys`
+  supprime les passkeys et révoque les sessions ; la connexion redevient mot de
+  passe. Enregistrez au moins deux passkeys.
