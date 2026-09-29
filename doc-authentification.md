@@ -439,3 +439,34 @@ Vérifiés sur l'itération précédente du même code, inchangés depuis (valid
 CORS n'ont pas été touchés par la suppression du setup) : 400 sur mot de passe
 trop court, 400 sur champ en trop, 429 à la 6ᵉ tentative, et préflight CORS
 `Access-Control-Allow-Credentials: true`.
+
+---
+
+## Passkeys (second facteur WebAuthn)
+
+Une fois au moins un passkey enregistré, `POST /auth/login` ne suffit plus : il
+valide le mot de passe, ne pose **aucun** cookie de session et renvoie
+`{ authenticated: false, passkeyRequired: true, options }`. Le front fait signer
+`options` par l'authentificateur puis appelle `POST /auth/passkey/login`
+(`{ response }`), qui ouvre la session. Sans passkey en base, le comportement
+reste celui du mot de passe seul.
+
+| Route | Protection | Rôle |
+|---|---|---|
+| `POST /auth/passkey/login` | cookie `passkey_pending` (posé par `login`) | Vérifie la signature, ouvre la session |
+| `GET /auth/passkey` | session | Liste les passkeys |
+| `POST /auth/passkey/register/options` | session | Défi d'enregistrement |
+| `POST /auth/passkey/register/verify` | session | Enregistre un passkey (`{ response, label? }`) |
+| `DELETE /auth/passkey/:id` | session | Supprime un passkey |
+
+- Seule la **clé publique** est stockée (`passkey_credential`). Le défi voyage dans
+  un JWT court (5 min) en cookie httpOnly, avec un `purpose` qui interdit de
+  réutiliser un défi d'enregistrement pour une connexion : aucun état serveur.
+- Les échecs de l'étape passkey comptent dans le même anti-force brute que le mot
+  de passe.
+- L'origine et le `rpID` sont ceux du **front** : déduits de `CORS_ORIGIN`, ou
+  `WEBAUTHN_ORIGIN` / `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME`. Changer le `rpID`
+  invalide les passkeys existants.
+- **Perte de tous les appareils** : `npm run auth:reset-passkeys` supprime les
+  passkeys et révoque les sessions ; la connexion redevient mot de passe seul, puis
+  on réenregistre depuis la page Sécurité. Enregistrez au moins deux passkeys.

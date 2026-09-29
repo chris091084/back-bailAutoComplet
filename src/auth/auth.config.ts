@@ -82,3 +82,9 @@ export const refreshCookieOptions = (): CookieOptions => ({
  * pose, `maxAge` en moins.
  */
 export const clearCookieOptions = (): CookieOptions => baseCookieOptions();
+
+/** Cookie éphémère qui porte le défi WebAuthn (5 min, aligné sur le TTL du jeton). */
+export const challengeCookieOptions = (): CookieOptions => ({
+  ...baseCookieOptions(),
+  maxAge: 5 * 60 * 1000,
+});
