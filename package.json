@@ -19,7 +19,8 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
     "migration:baseline": "ts-node -r tsconfig-paths/register src/database/baseline.ts",
-    "auth:seed": "ts-node -r tsconfig-paths/register src/auth/seed-password.ts"
+    "auth:seed": "ts-node -r tsconfig-paths/register src/auth/seed-password.ts",
+    "auth:reset-passkeys": "ts-node -r tsconfig-paths/register src/auth/reset-passkeys.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -29,6 +30,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@simplewebauthn/server": "^14.0.3",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
