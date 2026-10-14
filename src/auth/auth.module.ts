@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,6 +11,7 @@ import { AuthService } from './auth.service';
 import { LoginThrottleService } from './login-throttle.service';
 import { MagicLinkService } from './magic-link.service';
 import { MailModule } from '../mail/mail.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -31,6 +33,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     LoginThrottleService,
     JwtStrategy,
     JwtRefreshStrategy,
+    // Fermé par défaut : toute route de l'application exige une session, sauf
+    // celles marquées `@Public()`. S'applique à tous les modules, pas seulement
+    // à celui-ci.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
   // Exportés pour que d'autres modules puissent poser JwtAuthGuard sur leurs
   // routes sans réenregistrer la stratégie.

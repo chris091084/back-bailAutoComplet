@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { Public } from '../auth/guards/public.decorator';
 
 /** Corps renvoyé quand l'API et sa base répondent. */
 export interface ReadinessUp {
@@ -29,6 +30,7 @@ export interface ReadinessStarting {
  */
 const READINESS_TIMEOUT_MS = Number(process.env.READINESS_TIMEOUT_MS ?? 4000);
 
+@Public()
 @Controller('actuator/health')
 export class HealthController {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
