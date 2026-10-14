@@ -43,6 +43,7 @@ import {
 import { PasskeyService, type PasskeySummary } from './passkey.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { Public } from './guards/public.decorator';
 
 /**
  * La validation est posée ici plutôt qu'en pipe global : les DTO des modules
@@ -69,6 +70,7 @@ export class AuthController {
    * Moyens de connexion disponibles, pour que le front n'affiche que ceux qui
    * marchent. Public : ces deux booléens ne révèlent rien d'exploitable.
    */
+  @Public()
   @Get('methods')
   async methods(): Promise<{ passkey: boolean; magicLink: boolean }> {
     return {
@@ -88,6 +90,7 @@ export class AuthController {
    * Le mot de passe est semé hors ligne par `npm run auth:seed` : aucune route
    * HTTP ne permet de le définir ni de le modifier.
    */
+  @Public()
   @Post('login')
   @HttpCode(200)
   async login(
@@ -110,6 +113,7 @@ export class AuthController {
    * Première étape de la connexion par passkey : fournit le défi à signer. Le
    * cookie `passkey_pending` le porte jusqu'à `POST /auth/passkey/login`.
    */
+  @Public()
   @Post('passkey/login/options')
   @HttpCode(200)
   async passkeyLoginOptions(
@@ -137,6 +141,7 @@ export class AuthController {
    * Demande d'un lien de connexion. La réponse est toujours la même : elle ne
    * doit pas indiquer si l'adresse saisie est celle du propriétaire.
    */
+  @Public()
   @Post('magic-link')
   @HttpCode(200)
   async requestMagicLink(
@@ -148,6 +153,7 @@ export class AuthController {
   }
 
   /** Consomme le lien reçu par email et ouvre la session. */
+  @Public()
   @Post('magic-link/verify')
   @HttpCode(200)
   async verifyMagicLink(
@@ -164,6 +170,7 @@ export class AuthController {
    * Seconde étape de la connexion par passkey. Le cookie `passkey_pending` n'existe
    * que si `passkey/login/options` vient d'être appelé : il porte le défi à signer.
    */
+  @Public()
   @Post('passkey/login')
   @HttpCode(200)
   async passkeyLogin(
@@ -247,6 +254,7 @@ export class AuthController {
    * chaque usage, si bien qu'un jeton intercepté cesse de valoir dès que le
    * client légitime s'en sert.
    */
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   @UseGuards(JwtRefreshGuard)
@@ -264,6 +272,7 @@ export class AuthController {
    * base et les cookies effacés dans tous les cas — l'appel réussit donc même
    * sans session ouverte.
    */
+  @Public()
   @Post('logout')
   @HttpCode(200)
   async logout(
