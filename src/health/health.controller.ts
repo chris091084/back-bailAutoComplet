@@ -4,6 +4,7 @@ import {
   Header,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Public } from '../auth/guards/public.decorator';
@@ -41,6 +42,9 @@ export class HealthController {
    * il répond dès que le process écoute, c'est un test de vivacité, pas de
    * disponibilité.
    */
+  // Sonde de vivacité de l'hébergeur : sans accès base, quasi gratuite, et la
+  // limiter risquerait de la faire échouer et de provoquer un redémarrage.
+  @SkipThrottle()
   @Get()
   health(): { status: string } {
     return { status: 'UP' };

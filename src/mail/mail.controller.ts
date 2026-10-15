@@ -7,6 +7,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SendMailDto } from './dto/send-mail.dto';
 import { MailService } from './mail.service';
@@ -23,6 +24,8 @@ import { MailService } from './mail.service';
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
+  // Un envoi = une connexion SMTP : 10/min couvre l'usage réel (un courrier de congé).
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('send')
   @HttpCode(204)
   send(@Body() body: SendMailDto): Promise<void> {

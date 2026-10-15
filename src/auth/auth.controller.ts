@@ -15,6 +15,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type {
   AuthenticationResponseJSON,
   PublicKeyCredentialCreationOptionsJSON,
@@ -57,6 +58,9 @@ import { Public } from './guards/public.decorator';
     transform: true,
   }),
 )
+// 20 requêtes/min/IP sur toute l'authentification ; les routes qui coûtent un mail
+// ou un bcrypt resserrent ce quota ci-dessous.
+@Throttle({ default: { ttl: 60_000, limit: 20 } })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -91,6 +95,7 @@ export class AuthController {
    * HTTP ne permet de le définir ni de le modifier.
    */
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('login')
   @HttpCode(200)
   async login(
@@ -141,7 +146,9 @@ export class AuthController {
    * Demande d'un lien de connexion. La réponse est toujours la même : elle ne
    * doit pas indiquer si l'adresse saisie est celle du propriétaire.
    */
+  // Chaque appel valide envoie un mail : 3/min suffit largement à un humain.
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 3 } })
   @Post('magic-link')
   @HttpCode(200)
   async requestMagicLink(
