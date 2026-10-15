@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -45,6 +46,9 @@ export class DocumentsController {
    * de base64 dans un sens ni dans l'autre, qui gonflerait les échanges d'un
    * tiers pour rien.
    */
+  // LibreOffice : ~13 s de CPU par conversion sur l'hébergeur, c'est la route la
+  // plus coûteuse de l'API. Le front espace déjà ses appels ; 20/min est un plafond.
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('pdf')
   @UseInterceptors(
     FileInterceptor('document', { limits: { fileSize: TAILLE_MAX } }),
@@ -86,6 +90,8 @@ export class DocumentsController {
    * Ici, une fois la requête reçue, le serveur va au bout : Express ne
    * s'interrompt pas quand le client se déconnecte.
    */
+  // Une requête peut convertir jusqu'à 12 documents d'affilée : plafond plus bas.
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('envoyer')
   @HttpCode(204)
   @UseInterceptors(
