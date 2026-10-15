@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   HttpCode,
+  Ip,
   Param,
   ParseIntPipe,
   Post,
@@ -35,7 +36,6 @@ import { AuthService, type TokenPair } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { MagicLinkRequestDto, MagicLinkVerifyDto } from './dto/magic-link.dto';
 import { PasskeyRegistrationDto, PasskeyResponseDto } from './dto/passkey.dto';
-import { LoginThrottleService } from './login-throttle.service';
 import { MagicLinkService } from './magic-link.service';
 import {
   PASSKEY_PENDING_COOKIE,
@@ -66,7 +66,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passkeyService: PasskeyService,
-    private readonly loginThrottle: LoginThrottleService,
     private readonly magicLink: MagicLinkService,
   ) {}
 
@@ -100,6 +99,7 @@ export class AuthController {
   @HttpCode(200)
   async login(
     @Body() dto: LoginDto,
+    @Ip() ip: string,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ authenticated: true }> {
     if (await this.passkeyService.hasPasskeys()) {
@@ -108,7 +108,7 @@ export class AuthController {
       );
     }
 
-    await this.authService.validatePassword(dto);
+    await this.authService.validatePassword(dto, ip);
     await this.issueAndSetCookies(response);
 
     return { authenticated: true };
@@ -124,8 +124,6 @@ export class AuthController {
   async passkeyLoginOptions(
     @Res({ passthrough: true }) response: Response,
   ): Promise<PublicKeyCredentialRequestOptionsJSON> {
-    this.loginThrottle.assertNotLocked();
-
     if (!(await this.passkeyService.hasPasskeys())) {
       throw new NotFoundException('Aucun passkey enregistré');
     }
@@ -185,19 +183,14 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ authenticated: true }> {
-    this.loginThrottle.assertNotLocked();
+    // Pas de verrou par échecs ici : une signature WebAuthn ne se devine pas, et un
+    // verrou ne servirait qu'à laisser un tiers bloquer le propriétaire. Le quota
+    // par IP du contrôleur (`@Throttle`) suffit à borner le coût des essais.
+    await this.passkeyService.finishAuthentication(
+      request.cookies?.[PASSKEY_PENDING_COOKIE] as string | undefined,
+      dto.response as unknown as AuthenticationResponseJSON,
+    );
 
-    try {
-      await this.passkeyService.finishAuthentication(
-        request.cookies?.[PASSKEY_PENDING_COOKIE] as string | undefined,
-        dto.response as unknown as AuthenticationResponseJSON,
-      );
-    } catch (error) {
-      this.loginThrottle.registerFailure();
-      throw error;
-    }
-
-    this.loginThrottle.reset();
     response.clearCookie(PASSKEY_PENDING_COOKIE, clearCookieOptions());
     await this.issueAndSetCookies(response);
 

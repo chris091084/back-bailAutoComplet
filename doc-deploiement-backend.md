@@ -50,6 +50,8 @@
 | `COOKIE_SAMESITE` | **si domaines distincts** | `strict` | `none` obligatoire quand le front n'est pas sur le même site que l'API |
 | `COOKIE_SECURE` | non | `true` si `NODE_ENV=production` | Réserve les cookies à HTTPS |
 | `COOKIE_DOMAIN` | non | — | À ne poser que pour partager les cookies entre sous-domaines |
+| `AUTH_OWNER_EMAIL` | pour le lien de connexion par email | — | Adresses autorisées à recevoir un lien, séparées par des virgules (`a@x.fr,b@y.fr`). Seules ces adresses reçoivent un mail ; toutes ouvrent le même compte. Vide : lien de connexion désactivé |
+| `TRUST_PROXY` | **en production derrière un proxy** | — | Nombre de proxys devant l'API (`1` sur Scaleway). Sans lui, la limitation de débit et le verrou de connexion voient l'IP du proxy : tous les visiteurs partagent le même quota |
 
 Un gabarit complet est fourni dans `.env.example`.
 

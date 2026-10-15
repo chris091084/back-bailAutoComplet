@@ -76,7 +76,7 @@ export class AuthService implements OnApplicationBootstrap {
 
     if (!account?.passwordHash) {
       this.logger.warn(
-        "Aucun mot de passe en base : /auth/login refusera toute connexion. " +
+        'Aucun mot de passe en base : /auth/login refusera toute connexion. ' +
           'Exécutez `npm run auth:seed` en local pour en définir un.',
       );
     }
@@ -88,8 +88,8 @@ export class AuthService implements OnApplicationBootstrap {
    * bcrypt.compare travaille à temps constant pour un même coût, ce qui évite de
    * renseigner un attaquant sur la proximité de sa tentative.
    */
-  async validatePassword(dto: LoginDto): Promise<void> {
-    this.loginThrottle.assertNotLocked();
+  async validatePassword(dto: LoginDto, ip: string): Promise<void> {
+    await this.loginThrottle.assertNotLocked(ip);
 
     const account = await this.requireAccount();
 
@@ -98,19 +98,19 @@ export class AuthService implements OnApplicationBootstrap {
       // renseignerait un attaquant sur l'état du déploiement. La trace reste
       // côté serveur, où seul l'exploitant la lit.
       this.logger.warn(
-        'Tentative de connexion alors qu\'aucun mot de passe n\'est en base ' +
+        "Tentative de connexion alors qu'aucun mot de passe n'est en base " +
           '(`npm run auth:seed`).',
       );
-      this.loginThrottle.registerFailure();
+      await this.loginThrottle.registerFailure(ip);
       throw new UnauthorizedException('Mot de passe incorrect');
     }
 
     if (!(await bcrypt.compare(dto.password, account.passwordHash))) {
-      this.loginThrottle.registerFailure();
+      await this.loginThrottle.registerFailure(ip);
       throw new UnauthorizedException('Mot de passe incorrect');
     }
 
-    this.loginThrottle.reset();
+    await this.loginThrottle.reset(ip);
   }
 
   /**
@@ -136,7 +136,10 @@ export class AuthService implements OnApplicationBootstrap {
     await this.accountRepository.update(
       { id: SINGLE_ACCOUNT_ID },
       {
-        refreshTokenHash: await bcrypt.hash(digest(refreshToken), BCRYPT_ROUNDS),
+        refreshTokenHash: await bcrypt.hash(
+          digest(refreshToken),
+          BCRYPT_ROUNDS,
+        ),
       },
     );
 

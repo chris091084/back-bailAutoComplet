@@ -4,7 +4,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { AuthAccount, SINGLE_ACCOUNT_ID } from './auth-account.entity';
-import { ownerEmail } from './auth.config';
+import { ownerEmails } from './auth.config';
 import { webauthnOrigin } from './passkey.config';
 
 /** Validité d'un lien : assez court pour limiter l'exposition d'une boîte mail lue tard. */
@@ -25,7 +25,7 @@ const sameEmail = (candidate: string, expected: string): boolean => {
 };
 
 /**
- * Connexion par lien envoyé par email, réservée à l'adresse `AUTH_OWNER_EMAIL`.
+ * Connexion par lien envoyé par email, réservée aux adresses de `AUTH_OWNER_EMAIL` (une ou plusieurs).
  *
  * C'est la liste blanche : n'importe qui peut demander un lien, mais seule
  * l'adresse du propriétaire en reçoit un, et la réponse est identique dans tous
@@ -37,9 +37,6 @@ const sameEmail = (candidate: string, expected: string): boolean => {
 export class MagicLinkService {
   private readonly logger = new Logger('MagicLink');
 
-  /** En mémoire : suffisant en mono-instance, comme l'anti-force brute. */
-  private lastSentAt = 0;
-
   constructor(
     @InjectRepository(AuthAccount)
     private readonly accounts: Repository<AuthAccount>,
@@ -48,7 +45,7 @@ export class MagicLinkService {
 
   /** Indique si la fonctionnalité est utilisable, pour que le front masque le bouton sinon. */
   isEnabled(): boolean {
-    return Boolean(ownerEmail());
+    return ownerEmails().length > 0;
   }
 
   /**
@@ -56,36 +53,54 @@ export class MagicLinkService {
    * dirait à un tiers quelle adresse est la bonne. Les échecs vont dans les logs.
    */
   async request(email: string): Promise<void> {
-    const owner = ownerEmail();
+    const owners = ownerEmails();
 
-    if (!owner) {
+    if (owners.length === 0) {
       this.logger.warn(
         'Lien magique demandé mais AUTH_OWNER_EMAIL est absent : rien envoyé.',
       );
       return;
     }
 
-    if (!sameEmail(email, owner)) {
+    // Toute la liste est parcourue, sans s'arrêter à la première correspondance :
+    // le temps de réponse ne dit pas quelle position occupe l'adresse.
+    const owner = owners.reduce<string | undefined>(
+      (found, candidate) =>
+        sameEmail(email, candidate) ? (found ?? candidate) : found,
+      undefined,
+    );
+
+    if (!owner) {
       return;
     }
 
     const now = Date.now();
 
-    if (now - this.lastSentAt < MIN_INTERVAL_MS) {
-      this.logger.warn('Lien magique redemandé trop tôt : ignoré.');
-      return;
-    }
-
     // 256 bits d'aléa : impossible à deviner, donc pas besoin d'anti-force brute.
     const token = randomBytes(32).toString('base64url');
 
-    await this.accounts.update(
-      { id: SINGLE_ACCOUNT_ID },
-      {
+    // Le délai minimal est vérifié PAR LA BASE, dans l'UPDATE lui-même : la date
+    // d'envoi du dernier lien se déduit de son expiration (envoi = expiration −
+    // durée de vie). Une variable en mémoire serait propre à chaque instance, et
+    // deux demandes simultanées passeraient toutes les deux.
+    const claimed = await this.accounts
+      .createQueryBuilder()
+      .update(AuthAccount)
+      .set({
         magicLinkHash: digest(token),
         magicLinkExpiresAt: new Date(now + MAGIC_LINK_TTL_MS),
-      },
-    );
+      })
+      .where('id = :id', { id: SINGLE_ACCOUNT_ID })
+      .andWhere(
+        '(magic_link_expires_at IS NULL OR magic_link_expires_at < :limit)',
+        { limit: new Date(now + MAGIC_LINK_TTL_MS - MIN_INTERVAL_MS) },
+      )
+      .execute();
+
+    if (!claimed.affected) {
+      this.logger.warn('Lien magique redemandé trop tôt : ignoré.');
+      return;
+    }
 
     // Dans le fragment (#) et non dans la query : il n'est ni envoyé au serveur
     // du front, ni consigné dans ses logs, ni transmis en en-tête Referer.
@@ -104,7 +119,6 @@ export class MagicLinkService {
         // Ce mail porte un secret : pas de copie cachée d'archivage.
         sansCopie: true,
       });
-      this.lastSentAt = now;
     } catch (error) {
       this.logger.error(
         "Échec de l'envoi du lien magique",

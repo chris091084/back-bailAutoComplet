@@ -39,11 +39,17 @@ export const refreshTokenSecret = (): string =>
   requireEnv('JWT_REFRESH_SECRET', 'Voir .env.example.');
 
 /**
- * Adresse du propriétaire, seule autorisée à recevoir un lien de connexion.
- * Absente : la connexion par lien est simplement désactivée.
+ * Adresses autorisées à recevoir un lien de connexion : `AUTH_OWNER_EMAIL`,
+ * une adresse ou plusieurs séparées par des virgules (ou des points-virgules).
+ * Toutes ouvrent la même session, puisque l'application n'a qu'un compte : ne
+ * lister que des personnes de confiance.
+ * Vide ou absente : la connexion par lien est simplement désactivée.
  */
-export const ownerEmail = (): string | undefined =>
-  process.env.AUTH_OWNER_EMAIL?.trim() || undefined;
+export const ownerEmails = (): string[] =>
+  (process.env.AUTH_OWNER_EMAIL ?? '')
+    .split(/[,;]/)
+    .map((email) => email.trim())
+    .filter(Boolean);
 
 /**
  * `sameSite` vaut `strict` par défaut.

@@ -462,7 +462,7 @@ page Sécurité. Le lien par email évite d'avoir à taper le mot de passe.
 | `GET /auth/methods` | publique | `{ passkey, magicLink }` : moyens de connexion disponibles |
 | `POST /auth/passkey/login/options` | publique | Défi à signer (pose le cookie `passkey_pending`). 404 si aucun passkey |
 | `POST /auth/passkey/login` | cookie `passkey_pending` | Vérifie la signature, ouvre la session (`{ response }`) |
-| `POST /auth/magic-link` | publique | `{ email }` → envoie un lien si l'adresse est `AUTH_OWNER_EMAIL`. Réponse toujours `{ sent: true }` |
+| `POST /auth/magic-link` | publique | `{ email }` → envoie un lien si l'adresse figure dans `AUTH_OWNER_EMAIL`. Réponse toujours `{ sent: true }` |
 | `POST /auth/magic-link/verify` | publique | `{ token }` → consomme le lien, ouvre la session |
 | `GET /auth/passkey` | session | Liste les passkeys |
 | `POST /auth/passkey/register/options` | session | Défi d'enregistrement |
@@ -471,8 +471,9 @@ page Sécurité. Le lien par email évite d'avoir à taper le mot de passe.
 
 ### Lien par email
 
-- **Liste blanche d'une adresse** : `AUTH_OWNER_EMAIL`. N'importe qui peut appeler
-  la route, seule cette adresse reçoit un mail, et la réponse est identique dans
+- **Liste blanche d'adresses** : `AUTH_OWNER_EMAIL`, une ou plusieurs adresses
+  séparées par des virgules (toutes ouvrent le même compte). N'importe qui peut
+  appeler la route, seules ces adresses reçoivent un mail, et la réponse est identique dans
   tous les cas (y compris en cas d'échec SMTP, qui n'est que journalisé) pour ne
   pas révéler l'adresse autorisée. Variable absente : fonction désactivée.
 - Le mail part vers l'adresse **configurée**, jamais celle saisie, et **sans
