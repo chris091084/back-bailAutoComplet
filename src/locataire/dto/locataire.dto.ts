@@ -48,6 +48,11 @@ export class LocataireDto {
   loyerHorsCharges: number | null;
   charges: number | null;
   /**
+   * Date d'envoi du projet de bail au format ISO, `null` si aucun n'est parti :
+   * c'est ce que la liste des candidats affiche.
+   */
+  bailEnvoyeLe: string | null;
+  /**
    * Date d'envoi de la lettre de congé au format ISO, `null` si aucune n'est
    * partie : c'est ce que la liste des locataires affiche.
    */
@@ -69,6 +74,12 @@ export class LocataireDto {
    * aucun result_form n'est rattaché. Lecture seule.
    */
   chambreCouleur: string | null;
+  /**
+   * Type de garantie du bail rattaché (`result_form.garantie_type`), « Visale »
+   * ou « Garant physique ». `null` si aucun result_form n'est rattaché ou si le
+   * bail a été généré avant l'ajout du champ. Lecture seule.
+   */
+  garantieType: string | null;
 
   constructor(locataire: Locataire) {
     this.id = locataire.id;
@@ -88,6 +99,9 @@ export class LocataireDto {
     this.charges = locataire.resultForm?.chargePrice ?? null;
     // `new Date` plutôt que `.toISOString()` directement : selon le pilote, une
     // colonne timestamptz peut remonter en chaîne plutôt qu'en Date.
+    this.bailEnvoyeLe = locataire.bailEnvoyeLe
+      ? new Date(locataire.bailEnvoyeLe).toISOString()
+      : null;
     this.resiliationEnvoyeeLe = locataire.resiliationEnvoyeeLe
       ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
       : null;
@@ -97,5 +111,6 @@ export class LocataireDto {
       ? locataire.appartement?.chambres?.find((c) => c.piece === this.chambre)
       : undefined;
     this.chambreCouleur = chambreEntity?.couleur ?? null;
+    this.garantieType = locataire.resultForm?.garantieType ?? null;
   }
 }

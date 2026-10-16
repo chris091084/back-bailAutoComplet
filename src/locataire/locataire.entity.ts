@@ -83,6 +83,16 @@ export class Locataire {
   resultForm!: ResultForm | null;
 
   /**
+   * Date d'envoi du projet de bail au candidat, `null` tant qu'aucun n'est
+   * parti. Renseignée par le front une fois le mail accepté par /mail/send.
+   *
+   * Concerne le bail relu et envoyé, pas le bail généré : un bail peut être
+   * produit puis gardé de côté, la date ne se pose qu'à l'envoi.
+   */
+  @Column({ name: 'bail_envoye_le', type: 'timestamptz', nullable: true })
+  bailEnvoyeLe!: Date | null;
+
+  /**
    * Date d'envoi de la lettre de congé, `null` tant qu'aucune n'est partie.
    * Renseignée par le front une fois le mail accepté par /mail/send.
    */

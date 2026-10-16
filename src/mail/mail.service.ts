@@ -18,6 +18,8 @@ export interface MessageMail {
   to: string;
   subject: string;
   text: string;
+  /** Corps mis en forme ; `text` reste le repli des clients sans HTML. */
+  html?: string;
   attachments?: PieceJointe[];
   /**
    * Écarte `MAIL_BCC`. Indispensable pour tout mail qui porte un secret (lien de
@@ -45,6 +47,7 @@ export class MailService {
       to: payload.to,
       subject: payload.subject,
       text: payload.text,
+      html: payload.html,
       attachments: payload.attachments?.map((attachment) => ({
         filename: attachment.filename,
         content: Buffer.from(attachment.contentBase64, 'base64'),
@@ -72,6 +75,7 @@ export class MailService {
         bcc,
         subject: message.subject,
         text: message.text,
+        html: message.html,
         attachments: message.attachments,
       });
     } catch (error) {

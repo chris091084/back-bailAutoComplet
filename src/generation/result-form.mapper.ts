@@ -42,6 +42,7 @@ export function appliquerResultFormDto(
   resultForm.typeResidence = dto.typeResidence ?? null;
   resultForm.rentRef = dto.rentRef ?? null;
   resultForm.rentRefMaj = dto.rentRefMaj ?? null;
+  resultForm.garantieType = dto.garantieType ?? null;
 
   return resultForm;
 }

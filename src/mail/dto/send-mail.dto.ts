@@ -35,6 +35,14 @@ export class SendMailDto {
   @IsNotEmpty()
   text!: string;
 
+  /**
+   * Version mise en forme du corps du mail, éditée dans Quill côté front.
+   * `text` reste le repli pour les clients mail qui ne rendent pas le HTML.
+   */
+  @IsOptional()
+  @IsString()
+  html?: string;
+
   // Douze : une année de quittances mensuelles, qui partent dans un seul mail.
   @IsOptional()
   @IsArray()
