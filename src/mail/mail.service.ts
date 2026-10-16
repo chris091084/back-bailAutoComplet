@@ -28,6 +28,16 @@ export interface MessageMail {
   sansCopie?: boolean;
 }
 
+/**
+ * `lea.martin@exemple.fr` → `l***@exemple.fr`. Les logs disent qu'un mail est
+ * parti (ou non) sans y écrire l'adresse en entier : c'est une donnée
+ * personnelle, et l'hébergeur les conserve.
+ */
+export function masquerAdresse(adresse: string): string {
+  const arobase = adresse.lastIndexOf('@');
+  return arobase <= 0 ? '***' : `${adresse[0]}***${adresse.slice(arobase)}`;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);

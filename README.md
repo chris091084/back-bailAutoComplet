@@ -227,3 +227,18 @@ La clé vit dans le même conteneur que l'accès à la base : cela protège d'un
 de la base, d'une sauvegarde ou d'un dump, pas d'une prise de contrôle de
 l'application ni de la console de l'hébergeur. Les courriers envoyés (Gmail) ne
 sont pas concernés.
+
+---
+
+## États des lieux numériques
+
+Module qui remplace le formulaire Word : le locataire remplit, photographie et signe depuis un lien.
+Documentation complète dans [`docs/etat-des-lieux/`](docs/etat-des-lieux/README.md) (architecture, lancement
+en local, variables d'environnement, connexion OneDrive, secrets, RGPD).
+
+```bash
+npm run migration:run     # tables du module
+npm run edl:seed          # exemple d'état d'entrée signé (« Chambre 4 »)
+npm run test:e2e          # parcours complet de l'API (Postgres + Chrome requis)
+npm run edl:retention     # purge RGPD des documents échus (-- --simulation pour compter seulement)
+```
