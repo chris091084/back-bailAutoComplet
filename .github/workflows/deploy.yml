@@ -3,7 +3,7 @@ name: Build & Push to Scaleway
 on:
   push:
     branches:
-      - master1
+      - main
 
 jobs:
   build-and-push:
