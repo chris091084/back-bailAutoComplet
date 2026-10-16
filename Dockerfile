@@ -20,12 +20,21 @@ ENV TZ=UTC
 # `fonts-crosextra-carlito` remplace le Calibri du modèle Word : mêmes métriques,
 # donc même mise en page. Sans elle, LibreOffice substitue au jugé et le document
 # se décale.
+#
+# `chromium` fabrique le PDF des états des lieux (Puppeteer ; `puppeteer-core` ne
+# télécharge aucun navigateur). Il pèse ~300 Mo : c'est le prix d'un rendu HTML
+# fidèle, que LibreOffice ne sait pas faire (CSS, tableaux, miniatures).
+# Prévoir au moins 1 Go de mémoire pour le conteneur : un Chromium sans interface
+# consomme 200 à 400 Mo le temps d'un PDF (un seul à la fois, voir EdlPdfService).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libreoffice-writer \
+        chromium \
         fonts-crosextra-carlito \
         fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Sans carte graphique ni serveur X dans un conteneur, LibreOffice doit rendre
 # en mémoire : sans ces deux variables, il cherche un affichage et échoue.

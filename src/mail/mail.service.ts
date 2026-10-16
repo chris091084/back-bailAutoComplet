@@ -26,6 +26,16 @@ export interface MessageMail {
   sansCopie?: boolean;
 }
 
+/**
+ * `lea.martin@exemple.fr` → `l***@exemple.fr`. Les logs disent qu'un mail est
+ * parti (ou non) sans y écrire l'adresse en entier : c'est une donnée
+ * personnelle, et l'hébergeur les conserve.
+ */
+export function masquerAdresse(adresse: string): string {
+  const arobase = adresse.lastIndexOf('@');
+  return arobase <= 0 ? '***' : `${adresse[0]}***${adresse.slice(arobase)}`;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -77,7 +87,7 @@ export class MailService {
     } catch (error) {
       // Le détail (identifiants, hôte) ne doit pas remonter au navigateur.
       this.logger.error(
-        `Échec de l'envoi du mail à ${message.to}`,
+        `Échec de l'envoi du mail à ${masquerAdresse(message.to)}`,
         error instanceof Error ? error.stack : String(error),
       );
       throw new InternalServerErrorException(
@@ -88,7 +98,7 @@ export class MailService {
     // Sans cette trace, les logs ne permettent pas de dire si un mail est
     // parti : seules les conversions et les échecs y apparaissaient.
     this.logger.log(
-      `Mail envoyé à ${message.to} (${message.attachments?.length ?? 0} pièce(s) jointe(s))`,
+      `Mail envoyé à ${masquerAdresse(message.to)} (${message.attachments?.length ?? 0} pièce(s) jointe(s))`,
     );
   }
 

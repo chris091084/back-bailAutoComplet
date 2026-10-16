@@ -90,3 +90,19 @@ L'API écoute sur **http://localhost:8081**.
 | `npm run migration:generate -- src/migrations/NomMigration` | Générer une nouvelle migration |
 | `npm run auth:seed` | Changer le mot de passe de l'API |
 | `npm run test` | Lancer les tests |
+
+---
+
+## États des lieux numériques
+
+Module qui remplace le formulaire Word : le locataire remplit, photographie et signe depuis un lien.
+Documentation complète dans [`docs/etat-des-lieux/`](docs/etat-des-lieux/README.md) (architecture, lancement
+en local, variables d'environnement, connexion OneDrive, secrets, RGPD).
+
+```bash
+npm run migration:run     # tables du module
+npm run edl:seed          # exemple d'état d'entrée signé (« Chambre 4 »)
+npm run test:e2e          # parcours complet de l'API (Postgres + Chrome requis)
+npm run edl:retention     # purge RGPD des documents échus (-- --simulation pour compter seulement)
+```
+
