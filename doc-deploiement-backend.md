@@ -36,6 +36,8 @@
 | `DB_USERNAME` / `DB_PASSWORD` | si absents de l'URL | `postgres` / `root` | Identifiants |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` | en local | `localhost` / `5432` / `bailAutoComplete` | Connexion locale quand `DATABASE_URL` n'est pas défini |
 | `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par Render) |
+| `DB_SSL_CA` | recommandé | — | Certificat de l'autorité de la base (PEM, ou chemin de fichier). Active la vérification du certificat |
+| `DB_SSL_VERIFY` | non | `false` | `true` : vérifie le certificat avec les autorités publiques du système (sans `DB_SSL_CA`). Sans l'un ni l'autre, un avertissement est journalisé au démarrage |
 | `DB_MIGRATIONS_RUN` | non | `true` | Applique les migrations au démarrage, comme le faisait Liquibase |
 | `DB_LOGGING` | non | `false` | Trace le SQL |
 | `CORS_ORIGIN` | oui | `http://localhost:4200` | Origine autorisée |
@@ -322,7 +324,7 @@ Avant, le navigateur demandait chaque conversion puis le mail : un onglet
 rechargé pendant les 3 minutes (téléphone verrouillé, retour à l'accueil)
 abandonnait tout, sans mail ni erreur visible. Désormais, une fois la requête
 reçue, le serveur va au bout même si le client se déconnecte. Chaque mail parti
-laisse une ligne `Mail envoyé à …` dans les logs.
+laisse une ligne `Mail envoyé (id …)` dans les logs, sans l'adresse du destinataire (RGPD).
 
 Le **timeout HTTP du conteneur** (réglage Scaleway, 10 s à 60 min) doit couvrir
 douze conversions et l'envoi : 5 minutes au moins. En deçà, le front reçoit un

@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+import { readFileSync } from 'fs';
 import { types } from 'pg';
 import { DataSourceOptions } from 'typeorm';
 
@@ -71,11 +73,44 @@ const sslRequis = (): boolean => {
   return /sslmode=require/i.test(process.env.DATABASE_URL ?? '');
 };
 
+/**
+ * Le chiffrement seul n'empêche pas un intermédiaire de se faire passer pour la
+ * base : il faut aussi vérifier le certificat présenté (RGPD, art. 32).
+ *
+ * - `DB_SSL_CA` : certificat de l'autorité de la base, en PEM (les `\n` littéraux
+ *   sont acceptés) ou chemin d'un fichier. Active la vérification.
+ * - `DB_SSL_VERIFY=true` : vérifie avec les autorités publiques du système.
+ * - ni l'un ni l'autre : chiffrement sans vérification (ancien comportement),
+ *   signalé par un avertissement au démarrage.
+ */
+const buildSsl = (): false | { rejectUnauthorized: boolean; ca?: string } => {
+  if (!sslRequis()) {
+    return false;
+  }
+
+  const ca = process.env.DB_SSL_CA?.trim();
+  if (ca) {
+    const pem = ca.includes('BEGIN CERTIFICATE')
+      ? ca.replace(/\\n/g, '\n')
+      : readFileSync(ca, 'utf8');
+    return { rejectUnauthorized: true, ca: pem };
+  }
+
+  if (toBoolean(process.env.DB_SSL_VERIFY, false)) {
+    return { rejectUnauthorized: true };
+  }
+
+  new Logger('Database').warn(
+    'SSL actif mais certificat de la base non vérifié : renseignez DB_SSL_CA ou DB_SSL_VERIFY=true.',
+  );
+  return { rejectUnauthorized: false };
+};
+
 export const buildTypeOrmOptions = (): DataSourceOptions =>
   ({
     type: 'postgres',
     ...buildConnection(),
-    ssl: sslRequis() ? { rejectUnauthorized: false } : false,
+    ssl: buildSsl(),
     // Le schéma est piloté par les migrations, jamais par l'ORM.
     synchronize: false,
     migrationsRun: toBoolean(process.env.DB_MIGRATIONS_RUN, true),

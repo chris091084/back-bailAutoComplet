@@ -68,8 +68,9 @@ export class MailService {
       ? undefined
       : this.config.get<string>('MAIL_BCC')?.trim() || undefined;
 
+    let info: { messageId?: string };
     try {
-      await transporter.sendMail({
+      info = await transporter.sendMail({
         from,
         to: message.to,
         bcc,
@@ -80,8 +81,10 @@ export class MailService {
       });
     } catch (error) {
       // Le détail (identifiants, hôte) ne doit pas remonter au navigateur.
+      // L'adresse du destinataire n'est pas journalisée : les logs de
+      // l'hébergeur ont leur propre durée de rétention (RGPD, minimisation).
       this.logger.error(
-        `Échec de l'envoi du mail à ${message.to}`,
+        "Échec de l'envoi d'un mail",
         error instanceof Error ? error.stack : String(error),
       );
       throw new InternalServerErrorException(
@@ -91,8 +94,10 @@ export class MailService {
 
     // Sans cette trace, les logs ne permettent pas de dire si un mail est
     // parti : seules les conversions et les échecs y apparaissaient.
+    // L'identifiant du message suffit à le retrouver côté SMTP, sans écrire
+    // l'adresse du locataire dans les logs.
     this.logger.log(
-      `Mail envoyé à ${message.to} (${message.attachments?.length ?? 0} pièce(s) jointe(s))`,
+      `Mail envoyé (id ${info.messageId ?? 'inconnu'}, ${message.attachments?.length ?? 0} pièce(s) jointe(s))`,
     );
   }
 
