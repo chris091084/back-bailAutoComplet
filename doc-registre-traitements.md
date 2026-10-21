@@ -4,7 +4,7 @@
 > aux données personnelles (nouveau champ, nouveau prestataire, nouvelle
 > fonctionnalité). Il doit pouvoir être présenté à la CNIL sur demande.
 >
-> **Version 1.3 — 20/10/2026.** Brouillon établi à partir du code. Les points
+> **Version 1.8 — 20/10/2026.** Brouillon établi à partir du code. Les points
 > marqués ⚠️ **À CONFIRMER** demandent une décision ou une vérification humaine.
 > Ce document n'est pas un avis juridique.
 
@@ -47,7 +47,7 @@ aucun service tiers de conversion.
 | Base légale | Exécution du contrat de bail (art. 6.1.b) |
 | Destinataires | Le propriétaire (seul utilisateur de l'application) ; hébergeur de la base (Render) |
 | Transferts hors UE | Non (région Francfort) |
-| Durée de conservation | ⚠️ **À CONFIRMER** : proposition = durée du bail + 3 ans (prescription des actions locatives), puis suppression ou anonymisation. Les obligations comptables et fiscales peuvent justifier plus long pour certaines pièces |
+| Durée de conservation | **3 ans après la sortie** (prescription des actions nées du bail : art. 7-1 de la loi 89-462 du 6 juillet 1989, rendu applicable aux meublés en résidence principale par l'art. 25-3 et au bail mobilité par l'art. 25-12, vérifié sur Légifrance le 20/10/2026 ; couvre les trois types de bail de l'application : mobilité, étudiant, durée indéterminée). **Exception** : le propriétaire peut exclure un locataire sorti de la purge (litige en cours, obligation de conservation plus longue) avec le commutateur « Ne pas supprimer » de l'onglet Locataires sortis, puis suppression de la fiche, du bail (`result_form`) et de l'historique de génération (`generation`) : voir E1. ⚠️ **À CONFIRMER** : les obligations comptables et fiscales peuvent justifier plus long pour certaines pièces (quittances, justificatifs de revenus fonciers) ; elles ne sont pas stockées par l'application |
 | Sécurité | Accès par authentification forte (T3), connexion chiffrée (HTTPS), base accessible en SSL avec vérification du certificat (E7, à activer en production), rôle unique côté application |
 
 ### T2 — Génération et envoi des documents (bail, congé)
@@ -113,7 +113,7 @@ n'est envoyée).
 
 | # | Constat | Pourquoi c'est un sujet | Piste |
 |---|---|---|---|
-| E1 | Aucune purge des locataires : la « sortie » remplace la suppression, les fiches sortis restent indéfiniment | Principe de **limitation de la conservation** (art. 5.1.e) | Fixer une durée (T1), puis ajouter une purge ou une anonymisation |
+| E1 | Aucune purge des locataires : la « sortie » remplace la suppression, les fiches sortis restent indéfiniment | Principe de **limitation de la conservation** (art. 5.1.e) | 🔧 Purge ajoutée (v1.4) : `npm run purge:locataires` (essai à blanc) puis `-- --execute`, et automatique au démarrage de l'API avec `PURGE_LOCATAIRES=true` (désactivée par défaut). **À activer** en production après un essai à blanc. Les **candidats** (bail généré, jamais signé) n'ont pas de date de sortie : le délai ne court pas pour eux, ils se suppriment **à la main** depuis l'écran Locataires, onglet Candidats, bouton « Supprimer » (v1.5), qui efface la fiche, le bail et l'historique de génération. ⚠️ Le propriétaire doit penser à les supprimer quand une candidature n'aboutit pas. Après chaque purge automatique, un **mail de rappel** part aux adresses de `AUTH_OWNER_EMAIL` (sans copie cachée), avec la liste des anciens locataires et leurs adresses : le propriétaire supprime alors à la main leurs échanges (mails, SMS, papiers). Le message contient ces adresses et se retrouve dans la recherche : il se supprime avec le reste. Reste hors périmètre : les saisies de bail jamais générées (« brouillons »), supprimables depuis le formulaire de bail |
 | E2 | Table `login_failure` sans purge | Adresses IP gardées sans limite | Supprimer les lignes de plus de X jours (planifié ou à l'écriture) |
 | E3 | ✅ **Corrigé (v1.1).** `mail.service.ts` journalisait « Mail envoyé à *adresse* » | L'e-mail du locataire se retrouvait dans les journaux, avec leur propre rétention | Les logs portent désormais l'identifiant du message, plus l'adresse. Restent à vérifier : la rétention Scaleway, et le fait que la pile d'une erreur SMTP peut citer une adresse |
 | E4 | Champ libre `motif` du congé | Risque de saisir des données sensibles | Consigne d'usage, ou liste de motifs prédéfinis |
@@ -153,3 +153,8 @@ personnes. Conserver une trace même si la notification n'est pas nécessaire.
 | 20/10/2026 | 1.1 | E3 corrigé (plus d'adresse dans les logs) ; E7 ajouté (vérification du certificat de la base, code prêt) ; E8 ajouté (copie cachée `MAIL_BCC`) |
 | 20/10/2026 | 1.2 | Scaleway : région Paris confirmée ; E9 ajouté (HTTPS non imposé) |
 | 20/10/2026 | 1.3 | Front vérifié (HTTPS + HSTS OK) ; E10 ajouté (`vercel.json` d'en-têtes de sécurité) ; Koyeb probablement abandonné |
+| 20/10/2026 | 1.4 | E1 traité : durée de conservation fixée à 3 ans après la sortie, purge des locataires sortis (code et script) |
+| 20/10/2026 | 1.5 | Suppression manuelle d'un candidat (route `DELETE /locataire/:id` réservée à l'état `candidat`, bouton dans l'onglet Candidats) |
+| 20/10/2026 | 1.6 | Base légale des 3 ans vérifiée pour les baux meublés et mobilité (colocation par chambre) |
+| 20/10/2026 | 1.7 | Exception à la purge : commutateur « Ne pas supprimer » sur les locataires sortis (colonne `conservation_prolongee`) |
+| 20/10/2026 | 1.8 | Mail de rappel au propriétaire après chaque purge automatique, pour supprimer les échanges (mails, SMS, papiers) |

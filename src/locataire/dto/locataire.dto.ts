@@ -64,6 +64,11 @@ export class LocataireDto {
    */
   sortie: string | null;
   /**
+   * `true` si le propriétaire a exclu cette fiche de la purge RGPD des 3 ans.
+   * Lecture seule : il se change par `PUT /:id/conservation`.
+   */
+  conservationProlongee: boolean;
+  /**
    * Nom de la pièce issue du bail rattaché (`result_form.room`). `null` si
    * aucun result_form n'est rattaché. Lecture seule.
    */
@@ -106,6 +111,7 @@ export class LocataireDto {
       ? new Date(locataire.resiliationEnvoyeeLe).toISOString()
       : null;
     this.sortie = locataire.sortie ?? null;
+    this.conservationProlongee = locataire.conservationProlongee ?? false;
     this.chambre = locataire.resultForm?.room ?? null;
     const chambreEntity = this.chambre
       ? locataire.appartement?.chambres?.find((c) => c.piece === this.chambre)

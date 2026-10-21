@@ -3,8 +3,11 @@ import { ObjectLiteral, Repository } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
 import { ResultForm } from '../generation/result-form.entity';
 import { EtatLocataire } from './locataire-etat.enum';
+import { supprimerCandidat } from './locataire-purge';
 import { Locataire } from './locataire.entity';
 import { LocataireService } from './locataire.service';
+
+jest.mock('./locataire-purge');
 
 const creerRepositoryMock = <T extends ObjectLiteral>() =>
   ({
@@ -301,6 +304,127 @@ describe('LocataireService', () => {
           etat: EtatLocataire.LOCATAIRE,
         }),
       );
+    });
+  });
+
+  describe('supprimerCandidat', () => {
+    const supprimerCandidatMock = jest.mocked(supprimerCandidat);
+
+    beforeEach(() => {
+      supprimerCandidatMock.mockReset();
+      supprimerCandidatMock.mockResolvedValue(true);
+      (locataireRepository as { manager: unknown }).manager = {
+        connection: {},
+      };
+    });
+
+    it('supprime un candidat', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.CANDIDAT,
+      } as Locataire);
+
+      await service.supprimerCandidat(3);
+
+      expect(supprimerCandidatMock).toHaveBeenCalledWith(expect.anything(), 3);
+    });
+
+    it.each([EtatLocataire.LOCATAIRE, EtatLocataire.SORTI])(
+      'refuse un locataire à l’état %s : il sort, il ne se supprime pas',
+      async (etat) => {
+        locataireRepository.findOne.mockResolvedValue({
+          id: 3,
+          etat,
+        } as Locataire);
+
+        await expect(service.supprimerCandidat(3)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        expect(supprimerCandidatMock).not.toHaveBeenCalled();
+      },
+    );
+
+    it('répond 404 pour une fiche inconnue', async () => {
+      locataireRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.supprimerCandidat(99)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(supprimerCandidatMock).not.toHaveBeenCalled();
+    });
+
+    it('refuse si la fiche a été signée entre la lecture et la suppression', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.CANDIDAT,
+      } as Locataire);
+      supprimerCandidatMock.mockResolvedValue(false);
+
+      await expect(service.supprimerCandidat(3)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('definirConservationProlongee', () => {
+    it('exclut un locataire sorti de la purge', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.SORTI,
+        conservationProlongee: false,
+      } as Locataire);
+
+      const locataire = await service.definirConservationProlongee(3, true);
+
+      expect(locataire.conservationProlongee).toBe(true);
+      expect(locataireRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 3, conservationProlongee: true }),
+      );
+    });
+
+    it('lève l’exception', async () => {
+      locataireRepository.findOne.mockResolvedValue({
+        id: 3,
+        etat: EtatLocataire.SORTI,
+        conservationProlongee: true,
+      } as Locataire);
+
+      const locataire = await service.definirConservationProlongee(3, false);
+
+      expect(locataire.conservationProlongee).toBe(false);
+    });
+
+    it.each([EtatLocataire.CANDIDAT, EtatLocataire.LOCATAIRE])(
+      'refuse un locataire à l’état %s : seule la purge des sortis est en jeu',
+      async (etat) => {
+        locataireRepository.findOne.mockResolvedValue({
+          id: 3,
+          etat,
+        } as Locataire);
+
+        await expect(
+          service.definirConservationProlongee(3, true),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(locataireRepository.save).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([undefined, 'true', 1, null])(
+      'refuse une valeur qui n’est pas un booléen (%p)',
+      async (valeur) => {
+        await expect(
+          service.definirConservationProlongee(3, valeur),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(locataireRepository.save).not.toHaveBeenCalled();
+      },
+    );
+
+    it('répond 404 pour une fiche inconnue', async () => {
+      locataireRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.definirConservationProlongee(99, true),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

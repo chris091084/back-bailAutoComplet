@@ -132,6 +132,31 @@ export class LocataireController {
     );
   }
 
+  /**
+   * Supprime un candidat, et lui seul : 400 pour un locataire signé ou sorti.
+   * Le DELETE sans suffixe n'entre pas en conflit avec `:id/sortie`, qui annule
+   * une sortie.
+   */
+  @Delete(':id')
+  supprimerCandidat(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.locataireService.supprimerCandidat(id);
+  }
+
+  /**
+   * Exception à la purge RGPD des 3 ans, pour un locataire sorti : `{ prolongee:
+   * true }` l'en exclut, `false` la lève. Une route à part, comme la sortie :
+   * c'est une décision du propriétaire, pas un champ de la fiche.
+   */
+  @Put(':id/conservation')
+  async definirConservationProlongee(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('prolongee') prolongee?: boolean,
+  ): Promise<LocataireDto> {
+    return new LocataireDto(
+      await this.locataireService.definirConservationProlongee(id, prolongee),
+    );
+  }
+
   @Put(':id')
   async updateLocataire(
     @Param('id', ParseIntPipe) id: number,

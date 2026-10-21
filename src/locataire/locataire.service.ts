@@ -9,6 +9,7 @@ import { Appartement } from '../appartement/appartement.entity';
 import { ResultForm } from '../generation/result-form.entity';
 import { UpsertLocataireDto } from './dto/upsert-locataire.dto';
 import { EtatLocataire } from './locataire-etat.enum';
+import { supprimerCandidat } from './locataire-purge';
 import { Locataire } from './locataire.entity';
 
 /** Une date d'entrée ou de sortie est un jour de calendrier : « AAAA-MM-JJ ». */
@@ -248,6 +249,66 @@ export class LocataireService {
 
     locataire.sortie = this.validerDate(sortie, 'sortie');
     locataire.etat = EtatLocataire.SORTI;
+
+    return this.locataireRepository.save(locataire);
+  }
+
+  /**
+   * Suppression d'un candidat : la seule que l'application offre. Un locataire
+   * signé ne se supprime pas (il sort, puis la purge RGPD l'efface au bout de
+   * 3 ans) ; un candidat n'a jamais signé, aucun litige n'est à garder, et le
+   * propriétaire peut vouloir effacer les données d'une personne qui n'a pas
+   * donné suite.
+   *
+   * Emporte la fiche, son bail et son historique de génération.
+   */
+  async supprimerCandidat(id: number): Promise<void> {
+    const locataire = await this.getLocataireById(id);
+
+    if (locataire.etat !== EtatLocataire.CANDIDAT) {
+      throw new BadRequestException(
+        'Seul un candidat peut être supprimé : un locataire signé sort du logement',
+      );
+    }
+
+    const supprime = await supprimerCandidat(
+      this.locataireRepository.manager.connection,
+      id,
+    );
+
+    // La fiche a changé d'état entre la lecture et la suppression.
+    if (!supprime) {
+      throw new BadRequestException(
+        "La fiche n'est plus un candidat : suppression annulée",
+      );
+    }
+  }
+
+  /**
+   * Active ou lève l'exception à la purge RGPD d'un locataire sorti : une
+   * conservation prolongée l'exclut de la suppression des 3 ans (litige en
+   * cours, obligation de conservation plus longue).
+   *
+   * Réservée aux sortis, les seuls que la purge vise : l'afficher ailleurs
+   * laisserait croire qu'elle protège une fiche en place, qui n'en a pas besoin.
+   */
+  async definirConservationProlongee(
+    id: number,
+    prolongee: unknown,
+  ): Promise<Locataire> {
+    if (typeof prolongee !== 'boolean') {
+      throw new BadRequestException('prolongee est obligatoire (true ou false)');
+    }
+
+    const locataire = await this.getLocataireById(id);
+
+    if (locataire.etat !== EtatLocataire.SORTI) {
+      throw new BadRequestException(
+        'La conservation ne se prolonge que pour un locataire sorti',
+      );
+    }
+
+    locataire.conservationProlongee = prolongee;
 
     return this.locataireRepository.save(locataire);
   }
