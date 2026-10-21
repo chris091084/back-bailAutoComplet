@@ -116,4 +116,13 @@ export class Locataire {
    */
   @Column({ type: 'date', nullable: true })
   sortie!: string | null;
+
+  /**
+   * Exception à la purge RGPD : à `true`, la fiche n'est pas supprimée 3 ans
+   * après la sortie (litige en cours, obligation de conservation plus longue).
+   * Se change par `PUT /:id/conservation`, jamais par la modale d'édition, et
+   * seulement sur un locataire sorti : c'est le seul que la purge vise.
+   */
+  @Column({ name: 'conservation_prolongee', type: 'boolean', default: false })
+  conservationProlongee!: boolean;
 }
