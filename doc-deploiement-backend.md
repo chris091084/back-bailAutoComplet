@@ -17,6 +17,12 @@
 
 ---
 
+> **Mise à jour du 21/10/2026.** La production tourne sur **Scaleway** : le
+> backend dans un Serverless Container (région Paris, de 0 à 2 instances, il
+> s'éteint quand personne ne l'utilise) et la base dans une **Serverless SQL
+> Database** PostgreSQL 16 (région Paris). Les sections Render et Koyeb plus bas
+> sont conservées pour mémoire : elles ne décrivent plus la production.
+
 ## Architecture de déploiement
 
 ```
@@ -35,7 +41,7 @@
 | `DATABASE_URL` | en production | — | URL de connexion, forme `postgres://user:pass@hote:5432/base` **ou** `jdbc:postgresql://hote:5432/base?user=…&password=…` |
 | `DB_USERNAME` / `DB_PASSWORD` | si absents de l'URL | `postgres` / `root` | Identifiants |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` | en local | `localhost` / `5432` / `bailAutoComplete` | Connexion locale quand `DATABASE_URL` n'est pas défini |
-| `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par Render) |
+| `DB_SSL` | non | déduit de `sslmode=require` | Force le SSL (requis par les bases hébergées : Scaleway, Render) |
 | `DB_SSL_CA` | recommandé | — | Certificat de l'autorité de la base (PEM, ou chemin de fichier). Active la vérification du certificat |
 | `DB_SSL_VERIFY` | non | `false` | `true` : vérifie le certificat avec les autorités publiques du système (sans `DB_SSL_CA`). Sans l'un ni l'autre, un avertissement est journalisé au démarrage |
 | `DB_MIGRATIONS_RUN` | non | `true` | Applique les migrations au démarrage, comme le faisait Liquibase |
@@ -54,6 +60,13 @@
 | `COOKIE_DOMAIN` | non | — | À ne poser que pour partager les cookies entre sous-domaines |
 | `AUTH_OWNER_EMAIL` | pour le lien de connexion par email | — | Adresses autorisées à recevoir un lien, séparées par des virgules (`a@x.fr,b@y.fr`). Seules ces adresses reçoivent un mail ; toutes ouvrent le même compte. Vide : lien de connexion désactivé |
 | `TRUST_PROXY` | **en production derrière un proxy** | — | Nombre de proxys devant l'API (`1` sur Scaleway). Sans lui, la limitation de débit et le verrou de connexion voient l'IP du proxy : tous les visiteurs partagent le même quota |
+
+| `ENCRYPTION_KEY` | **oui** | — | Clé de chiffrement des colonnes personnelles (32 octets en base64). **L'API refuse de démarrer sans.** Variable **secrète**, aussi rangée dans un gestionnaire de mots de passe : la perdre fait perdre les données chiffrées. Voir le README |
+| `ENCRYPTION_KEY_PREVIOUS` | non | — | Ancienne clé, **en lecture seule**, pendant un changement de clé |
+| `PURGE_LOCATAIRES` | non | absente (purge désactivée) | `true` : supprime au démarrage les locataires sortis depuis plus de 3 ans (RGPD). **Définitif.** Voir le README, section RGPD |
+
+`AUTH_OWNER_EMAIL` reçoit aussi le mail de rappel envoyé après chaque purge. Les
+variables `MAIL_*` doivent être posées pour qu'il parte.
 
 Un gabarit complet est fourni dans `.env.example`.
 
@@ -142,6 +155,7 @@ npm run migration:show      # état des migrations
 npm run migration:run       # applique les migrations en attente
 npm run migration:revert    # annule la dernière migration
 npm run migration:baseline  # marque tout comme appliqué, sans exécuter
+npm run purge:locataires    # RGPD : essai à blanc de la purge (n'écrit rien)
 ```
 
 ---
@@ -198,7 +212,136 @@ La valeur est mise en cache 6 h en mémoire (l'IRL n'est publié qu'une fois par
 
 ---
 
+## Base de données Scaleway (Serverless SQL Database)
+
+C'est la base de production. Elle se connecte comme un PostgreSQL ordinaire,
+avec des identifiants particuliers :
+
+| Élément | Valeur |
+|---|---|
+| Hôte | `<DATABASE_ID>.pg.sdb.fr-par.scw.cloud` (l'identifiant de la base est affiché sur sa page) |
+| Port / base | `5432` / `bailautocomplete-db` |
+| Utilisateur | l'**identifiant de l'application IAM** (un UUID), pas l'« access key » `SCW…` |
+| Mot de passe | la **clé secrète** (Secret key) d'une clé API de cette application |
+| Chiffrement | obligatoire : `?sslmode=require` |
+
+```
+postgres://<APPLICATION_ID>:<CLE_SECRETE>@<DATABASE_ID>.pg.sdb.fr-par.scw.cloud:5432/bailautocomplete-db?sslmode=require
+```
+
+Cette URL est la valeur de `DATABASE_URL` du conteneur : à enregistrer comme
+**variable secrète**, pas comme variable normale (une variable normale se relit en
+clair dans la console).
+
+### La clé secrète
+
+- Elle ne s'affiche qu'**une seule fois**, à la création de la clé API : la copier
+  aussitôt. Perdue, elle ne se récupère pas, il faut en créer une autre.
+- Elle **expire au bout d'un an au plus** : une clé expirée coupe l'accès de
+  l'application à la base. Poser un rappel dans l'agenda avant l'échéance.
+- Ne jamais la taper dans une commande (elle resterait dans l'historique du
+  terminal), ni la coller dans une conversation ou une capture d'écran.
+
+### Changer la clé sans coupure
+
+1. IAM, API keys, **Generate API key** : choisir la **même application** que
+   l'ancienne clé (mêmes droits, même utilisateur), copier la clé secrète.
+2. Tester la nouvelle URL avec `psql` (voir plus bas).
+3. Remplacer `DATABASE_URL` dans les variables du conteneur et redéployer.
+4. Vérifier que l'API répond (statut Ready, connexion possible).
+5. **Seulement alors**, supprimer l'ancienne clé. Créer une clé n'invalide pas
+   l'ancienne : seule sa suppression coupe son accès. Ne pas supprimer la clé
+   de l'application `ci-github-actions`, qui sert au déploiement.
+
+### Erreurs de connexion courantes
+
+| Message | Cause |
+|---|---|
+| `password authentication failed for user "SCW…"` | L'utilisateur envoyé est une access key : il faut l'identifiant (UUID) de l'application |
+| `Database hostname wasn't sent to server` | Seconde tentative sans chiffrement après un premier échec : forcer `sslmode=require` (ou ajouter `?options=databaseid%3D<DATABASE_ID>` à l'URL, comme l'indique le message) |
+| `no password supplied` | La variable `PGPASSWORD` est vide dans le terminal |
+
+### Sauvegarder la production, et répéter une opération sur une copie
+
+La version 14 de `psql` et de `pg_dump` installée sur le poste refuse de lire une
+base 16 : passer par Docker avec une image de la même version.
+
+```bash
+read -rs PGPASSWORD && export PGPASSWORD      # coller la clé secrète, Entrée (rien ne s'affiche)
+APP_ID='<APPLICATION_ID>'
+
+docker run --rm -e PGPASSWORD -e PGSSLMODE=require postgres:16-alpine \
+  pg_dump -h <DATABASE_ID>.pg.sdb.fr-par.scw.cloud -p 5432 -U "$APP_ID" \
+  -d bailautocomplete-db --no-owner --no-acl > ~/sauvegarde-bailauto.sql
+```
+
+Restaurer dans une base jetable, puis y répéter la purge :
+
+```bash
+docker run -d --name pg-prod-copy -e POSTGRES_PASSWORD=jetable -p 5440:5432 postgres:16-alpine
+docker exec pg-prod-copy createdb -U postgres bailauto_copy
+docker exec -i pg-prod-copy psql -U postgres -d bailauto_copy < ~/sauvegarde-bailauto.sql
+
+DATABASE_URL='postgres://postgres:jetable@localhost:5440/bailauto_copy' npm run purge:locataires
+```
+
+Ces fichiers contiennent les **données réelles de tous les locataires** (en clair
+tant que le chiffrement n'est pas en production ; ensuite chiffrées, et ils ne
+servent qu'avec la même `ENCRYPTION_KEY`) : les
+garder hors du projet (jamais dans git), puis les supprimer après usage
+(`docker rm -f pg-prod-copy` et le fichier `.sql`). Ne pas démarrer l'API contre
+cette copie avec un vrai serveur SMTP : elle contient de vraies adresses.
+
+## Mise en production du chiffrement des colonnes
+
+À suivre **dans l'ordre**. Le point délicat : l'API refuse de démarrer sans
+`ENCRYPTION_KEY`, et les données ne sont chiffrées qu'après le déploiement.
+
+```
+1 clé ─► 2 sauvegarde ─► 3 répétition sur copie ─► 4 variable Scaleway ─► 5 déploiement
+      ─► 6 vérification ─► 7 chiffrement des données ─► 8 contrôle ─► 9 nettoyage
+```
+
+1. **Générer la clé** (commande du README) et la ranger tout de suite dans un
+   gestionnaire de mots de passe. Ne pas la taper dans une commande ni la coller
+   dans un échange.
+2. **Sauvegarder la production** (section précédente). Ce dump contient les données
+   en clair : c'est le filet de sécurité, à supprimer à l'étape 9.
+3. **Répéter sur une copie jetable** : restaurer ce dump dans la base Docker de test,
+   puis, avec une clé de test, `npm run chiffrer:donnees` (essai à blanc) puis
+   `-- --execute`. Vérifier que l'application lit toujours (purge d'essai, API).
+4. **Poser `ENCRYPTION_KEY`** comme variable **secrète** du conteneur Scaleway,
+   *avant* de déployer.
+5. **Déployer** le code. Au démarrage, la migration passe les colonnes en texte ;
+   l'application lit les données encore en clair et chiffre toute nouvelle écriture.
+   Le journal affiche « empreinte de la clé : xxxxxxxx » : la noter.
+6. **Vérifier l'application** : liste des locataires, ouverture d'une fiche, génération
+   d'un document.
+7. **Chiffrer les données existantes**, depuis le poste, avec la même clé :
+
+   ```bash
+   read -rs ENCRYPTION_KEY && export ENCRYPTION_KEY   # coller la clé, Entrée
+   read -rs DATABASE_URL && export DATABASE_URL       # coller l'URL de la base, Entrée
+   npm run chiffrer:donnees                           # essai à blanc
+   npm run chiffrer:donnees -- --execute
+   ```
+
+   **Comparer l'empreinte affichée à celle du journal de l'API** : si elles
+   diffèrent, s'arrêter, la clé n'est pas la même.
+8. **Contrôler** : l'application affiche toujours les noms ; dans l'extension SQL, les
+   colonnes concernées montrent `enc:v1:…`. Prendre un nouveau dump : il est désormais
+   chiffré.
+9. **Nettoyer** : supprimer les dumps d'avant le chiffrement et la copie Docker ; les
+   sauvegardes automatiques Scaleway d'avant le chiffrement contiennent encore les
+   données en clair jusqu'à leur expiration (vérifier leur durée).
+
+En cas de problème à l'étape 7 : rien n'est validé si une valeur ne se relit pas
+correctement, et le script est rejouable. Ne pas revenir en arrière après le
+chiffrement (la migration de types n'est plus réversible) : corriger la clé.
+
 ## Déploiement sur Render (Base de données PostgreSQL)
+
+> Historique : la production n'est plus sur Render (voir la mise à jour en haut).
 
 1. Créer un compte sur **render.com** (connexion GitHub)
 2. **New** → **PostgreSQL**
@@ -215,6 +358,8 @@ directement exploitable : plus besoin de la convertir en URL JDBC.
 ---
 
 ## Déploiement sur Koyeb (Backend NestJS)
+
+> Historique : la production n'est plus sur Koyeb (voir la mise à jour en haut).
 
 1. Créer un compte sur **koyeb.com** (connexion GitHub)
 2. **Create Service** → **Web Service**

@@ -21,7 +21,8 @@
     "migration:baseline": "ts-node -r tsconfig-paths/register src/database/baseline.ts",
     "auth:seed": "ts-node -r tsconfig-paths/register src/auth/seed-password.ts",
     "auth:reset-passkeys": "ts-node -r tsconfig-paths/register src/auth/reset-passkeys.ts",
-    "purge:locataires": "ts-node -r tsconfig-paths/register src/locataire/purge-locataires.ts"
+    "purge:locataires": "ts-node -r tsconfig-paths/register src/locataire/purge-locataires.ts",
+    "chiffrer:donnees": "ts-node -r tsconfig-paths/register src/database/chiffrer-donnees.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

@@ -1,4 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
+import { encryptedTransformer } from '../common/encrypted.transformer';
 import { ResultForm } from './result-form.entity';
 
 @Entity('generation')
@@ -14,7 +15,11 @@ export class Generation {
   @Column({ name: 'appartement_name', type: 'varchar', length: 255 })
   appartementName!: string;
 
-  @Column({ name: 'locataire_name', type: 'varchar', length: 255 })
+  @Column({
+    name: 'locataire_name',
+    type: 'text',
+    transformer: encryptedTransformer,
+  })
   locataireName!: string;
 
   @OneToOne(() => ResultForm, { cascade: true, nullable: true, eager: true })
