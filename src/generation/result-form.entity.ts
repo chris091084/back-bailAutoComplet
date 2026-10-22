@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
 import { Bailleur } from '../bailleur/bailleur.entity';
+import { encryptedTransformer } from '../common/encrypted.transformer';
 import { numericTransformer } from '../common/numeric.transformer';
 
 @Entity('result_form')
@@ -12,7 +13,7 @@ export class ResultForm {
   })
   id!: number;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   adress!: string | null;
 
   @ManyToOne(() => Appartement, { nullable: true })
@@ -29,10 +30,10 @@ export class ResultForm {
   })
   chargePrice!: number | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   email!: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   firstname!: string | null;
 
   @Column({ name: 'date_from', type: 'date', nullable: true })
@@ -41,10 +42,10 @@ export class ResultForm {
   @Column({ name: 'date_to', type: 'date', nullable: true })
   to!: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   motif!: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   name!: string | null;
 
   @Column({
@@ -60,7 +61,7 @@ export class ResultForm {
   @Column({ type: 'varchar', length: 255, nullable: true })
   room!: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   telephone!: string | null;
 
   @ManyToOne(() => Bailleur, { nullable: true })

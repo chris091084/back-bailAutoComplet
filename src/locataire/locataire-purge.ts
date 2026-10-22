@@ -1,4 +1,5 @@
 import { DataSource, QueryRunner } from 'typeorm';
+import { dechiffrer } from '../common/encryption';
 import { EtatLocataire } from './locataire-etat.enum';
 
 /**
@@ -36,7 +37,7 @@ export interface AncienLocataire {
 }
 
 /** Colonnes lues avant suppression : après, il ne resterait rien à rappeler. */
-interface FicheASupprimer {
+export interface FicheASupprimer {
   id: string;
   result_form_id: string | null;
   nom: string;
@@ -50,22 +51,26 @@ interface FicheASupprimer {
 const COLONNES_FICHE = `l."id", l."result_form_id", l."nom", l."prenom", l."email",
          rf."email" AS bail_email, to_char(l."sortie", 'YYYY-MM-DD') AS sortie`;
 
-const versAncien = (fiche: FicheASupprimer): AncienLocataire => {
+/**
+ * Le SQL brut ne passe pas par les entités : nom, prénom et adresses arrivent
+ * chiffrés et se déchiffrent ici, pour que le rappel au propriétaire soit lisible.
+ */
+export const versAncien = (fiche: FicheASupprimer): AncienLocataire => {
   const vus = new Set<string>();
-  const emails = [fiche.email, fiche.bail_email].filter(
-    (adresse): adresse is string => {
+  const emails = [fiche.email, fiche.bail_email]
+    .map((adresse) => (adresse ? dechiffrer(adresse) : adresse))
+    .filter((adresse): adresse is string => {
       const propre = adresse?.trim().toLowerCase();
       if (!propre || vus.has(propre)) {
         return false;
       }
       vus.add(propre);
       return true;
-    },
-  );
+    });
 
   return {
-    nom: fiche.nom,
-    prenom: fiche.prenom,
+    nom: dechiffrer(fiche.nom),
+    prenom: dechiffrer(fiche.prenom),
     emails: emails.map((adresse) => adresse.trim()),
     sortie: fiche.sortie,
   };

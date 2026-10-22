@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Appartement } from '../appartement/appartement.entity';
+import { encryptedTransformer } from '../common/encrypted.transformer';
 import { numericTransformer } from '../common/numeric.transformer';
 import { ResultForm } from '../generation/result-form.entity';
 import { EtatLocataire } from './locataire-etat.enum';
@@ -13,33 +14,38 @@ export class Locataire {
   })
   id!: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'text', transformer: encryptedTransformer })
   nom!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'text', transformer: encryptedTransformer })
   prenom!: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   telephone!: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   email!: string | null;
 
   /**
    * Date de naissance, dont la liste tire l'âge affiché. Nullable, rien ne la
    * renseigne à la génération du bail, elle se saisit depuis la fiche.
    *
-   * Typée `string` (« AAAA-MM-JJ ») comme `entree` et `sortie` : le pilote rend
-   * les colonnes `date` en chaîne, sans fuseau à réinterpréter.
+   * Typée `string` (« AAAA-MM-JJ ») comme `entree` et `sortie`. Chiffrée : la
+   * colonne est du texte (plus un `date`), l'âge se calcule côté front.
    */
-  @Column({ name: 'date_naissance', type: 'date', nullable: true })
+  @Column({
+    name: 'date_naissance',
+    type: 'text',
+    nullable: true,
+    transformer: encryptedTransformer,
+  })
   dateNaissance!: string | null;
 
   /**
    * Profession du locataire, saisie au formulaire de bail avec sa date de
    * naissance. Nullable, comme tout ce que la fiche ne rend pas obligatoire.
    */
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'text', nullable: true, transformer: encryptedTransformer })
   profession!: string | null;
 
   /**
