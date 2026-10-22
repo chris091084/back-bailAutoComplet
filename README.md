@@ -90,3 +90,30 @@ L'API écoute sur **http://localhost:8081**.
 | `npm run migration:generate -- src/migrations/NomMigration` | Générer une nouvelle migration |
 | `npm run auth:seed` | Changer le mot de passe de l'API |
 | `npm run test` | Lancer les tests |
+
+---
+
+## Statistiques
+
+`GET /statistiques/locataires` (connexion obligatoire, comme toutes les routes ;
+`?appartementId=` pour un seul logement) renvoie des chiffres agrégés sur les
+locataires signés, en place ou sortis. Les candidats n'y comptent pas.
+
+| Bloc | Contenu |
+|---|---|
+| `population` | locataires en place, sortis, total |
+| `age` | moyenne, médiane, min, max, tranches (moins de 25 ans, 25 à 34, 35 à 44, 45 et plus), fiches sans date |
+| `professions` | nombre de locataires par profession (casse, accents et espaces ignorés), « Non renseignée » en dernier |
+| `entrees` | par année, par mois de l'année (saisonnalité), entrées manquantes |
+| `duree` | durée de séjour en mois : sortis (entrée → sortie) et en place (entrée → aujourd'hui) |
+
+Pourquoi calculées dans l'API et pas en SQL : nom, date de naissance et profession
+sont **chiffrés** en base, seule l'application sait les lire. Le calcul charge
+seulement les colonnes utiles, en mémoire (`src/statistiques/statistiques.calcul.ts`,
+fonction pure testée), et le résultat ne contient que des nombres et des catégories,
+jamais un nom ni une adresse. Chaque bloc indique sur combien de fiches il repose :
+une date absente, mal formée ou incohérente est écartée du calcul concerné.
+
+La profession est un texte libre (« STAPS », « L1 maths »…) : sans liste de
+catégories à la saisie, la répartition donne surtout des valeurs uniques.
+

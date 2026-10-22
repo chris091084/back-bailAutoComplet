@@ -14,6 +14,7 @@ import { GenerationModule } from './generation/generation.module';
 import { HealthController } from './health/health.controller';
 import { LocataireModule } from './locataire/locataire.module';
 import { MailModule } from './mail/mail.module';
+import { StatistiquesModule } from './statistiques/statistiques.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MailModule } from './mail/mail.module';
     GenerationModule,
     LocataireModule,
     MailModule,
+    StatistiquesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
