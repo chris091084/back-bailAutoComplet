@@ -79,6 +79,16 @@ describe('genererHtml', () => {
     expect(html).toContain('<b>Locataire :</b> Tache');
   });
 
+  it('pour une sortie, nomme les colonnes « entrée » et « sortie » pour comparer', () => {
+    const html = genererHtml(donnees({ sortie: true }));
+
+    expect(html).toContain('État à l’entrée (référence)');
+    expect(html).toContain('État à la sortie');
+    expect(html).toContain('<b>À l’entrée :</b> Peinture récente');
+    expect(html).toContain('<b>À la sortie :</b> Tache');
+    expect(html).not.toContain('État (bailleur / référence)');
+  });
+
   it('distingue « validé tel quel » d’une saisie du locataire', () => {
     expect(genererHtml(donnees())).toContain('Validé tel quel');
   });

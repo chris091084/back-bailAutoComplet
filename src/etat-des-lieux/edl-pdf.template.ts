@@ -29,6 +29,11 @@ export interface ElementPdf {
 
 export interface DonneesPdf {
   titre: string;
+  /**
+   * Sortie : la colonne « référence » est l'état d'entrée et les en-têtes le
+   * disent, pour comparer ligne à ligne. Absent = entrée.
+   */
+  sortie?: boolean;
   /** Document non signé : un bandeau le dit, pour qu'on ne le prenne pas pour définitif. */
   brouillon: boolean;
   dateSignature: string | null;
@@ -78,7 +83,7 @@ const ligneInfo = (
     ? `<tr><th>${echapper(libelle)}</th><td>${echapper(valeur)}</td></tr>`
     : '';
 
-function elementHtml(element: ElementPdf): string {
+function elementHtml(element: ElementPdf, sortie: boolean): string {
   const bailleur = element.etatBailleur
     ? echapper(element.etatBailleur)
     : '<span class="muet">—</span>';
@@ -91,10 +96,10 @@ function elementHtml(element: ElementPdf): string {
 
   const commentaires = [
     element.commentaireBailleur
-      ? `<div><b>Bailleur :</b> ${echapper(element.commentaireBailleur)}</div>`
+      ? `<div><b>${sortie ? 'À l’entrée' : 'Bailleur'} :</b> ${echapper(element.commentaireBailleur)}</div>`
       : '',
     element.commentaireLocataire
-      ? `<div><b>Locataire :</b> ${echapper(element.commentaireLocataire)}</div>`
+      ? `<div><b>${sortie ? 'À la sortie' : 'Locataire'} :</b> ${echapper(element.commentaireLocataire)}</div>`
       : '',
   ].join('');
 
@@ -128,13 +133,14 @@ function signatureHtml(
 }
 
 export function genererHtml(donnees: DonneesPdf): string {
+  const sortie = donnees.sortie === true;
   const pieces = donnees.pieces
     .map(
       (piece) => `<section class="piece">
   <h2>${echapper(piece.nom)}</h2>
   <table class="tableau">
-    <thead><tr><th class="c-nom">Élément</th><th class="c-etat">État (bailleur / référence)</th><th class="c-etat">État (locataire)</th><th>Commentaires</th></tr></thead>
-    <tbody>${piece.elements.map(elementHtml).join('')}</tbody>
+    <thead><tr><th class="c-nom">Élément</th><th class="c-etat">${sortie ? 'État à l’entrée (référence)' : 'État (bailleur / référence)'}</th><th class="c-etat">${sortie ? 'État à la sortie' : 'État (locataire)'}</th><th>Commentaires</th></tr></thead>
+    <tbody>${piece.elements.map((e) => elementHtml(e, sortie)).join('')}</tbody>
   </table>
 </section>`,
     )

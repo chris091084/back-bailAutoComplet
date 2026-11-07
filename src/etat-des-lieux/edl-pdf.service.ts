@@ -125,6 +125,7 @@ export class EdlPdfService {
         edl.type === TypeEtatDesLieux.SORTIE
           ? 'État des lieux de sortie'
           : 'État des lieux d’entrée',
+      sortie: edl.type === TypeEtatDesLieux.SORTIE,
       brouillon: edl.statut !== StatutEtatDesLieux.SIGNED,
       dateSignature: edl.dateSignature ? dateLongue(edl.dateSignature) : null,
       bailleur: bailleur
