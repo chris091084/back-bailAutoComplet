@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EncadrementLoyersService } from '../encadrement-loyers/encadrement-loyers.service';
 import { IrlDto } from '../irl/dto/irl.dto';
 import { IrlService } from '../irl/irl.service';
 import { Appartement } from './appartement.entity';
@@ -24,6 +25,7 @@ export class AppartementService {
     @InjectRepository(Appartement)
     private readonly appartementRepository: Repository<Appartement>,
     private readonly irlService: IrlService,
+    private readonly encadrementLoyersService: EncadrementLoyersService,
   ) {}
 
   async getAllAppartement(): Promise<AppartementDto[]> {
@@ -44,6 +46,12 @@ export class AppartementService {
       await this.applyLatestIrl(appartement, latestIrl);
     }
 
+    // Les requêtes vers l'encadrement des loyers sont mises en cache et
+    // regroupées par adresse : on peut les lancer en parallèle.
+    await Promise.all(
+      appartements.map((appartement) => this.applyLatestRentRef(appartement)),
+    );
+
     return appartements.map((appartement) => new AppartementDto(appartement));
   }
 
@@ -57,6 +65,8 @@ export class AppartementService {
       appartement,
       await this.irlService.getLatestIrl(),
     );
+
+    await this.applyLatestRentRef(appartement);
 
     return new AppartementDto(appartement);
   }
@@ -75,7 +85,7 @@ export class AppartementService {
     id: number,
     details: Partial<Appartement>,
   ): Promise<AppartementDto> {
-    await this.findOneOrFail(id);
+    const existant = await this.findOneOrFail(id);
 
     const modifications: Partial<Appartement> = {};
 
@@ -86,6 +96,24 @@ export class AppartementService {
       if (details[champ] !== undefined) {
         modifications[champ] = this.versNombre(details[champ]);
       }
+    }
+
+    // Le front envoie le mode choisi (interrupteur automatique / manuel). En
+    // automatique, les valeurs reçues ne sont que l'écho de celles en base : on
+    // ne les écrit pas, elles seront remplacées par celles de l'encadrement.
+    // Sans mode explicite, on le déduit : une valeur modifiée à la main fige les
+    // loyers, vider un champ rebascule en automatique, des valeurs inchangées
+    // ne changent rien.
+    const manuel =
+      typeof details.rentRefManual === 'boolean'
+        ? details.rentRefManual
+        : this.rentRefManuel(existant, modifications);
+    if (manuel === false && typeof details.rentRefManual === 'boolean') {
+      delete modifications.rentRef;
+      delete modifications.rentRefMaj;
+    }
+    if (manuel !== undefined) {
+      modifications.rentRefManual = manuel;
     }
 
     if (details.valIrl != null) {
@@ -105,6 +133,9 @@ export class AppartementService {
     }
 
     await this.appliquerModifications(id, modifications);
+    if (manuel !== undefined) {
+      await this.syncManuelFilature(id, manuel);
+    }
 
     // Même alignement des loyers de référence que via `updateRent`.
     if (modifications.rentRef != null) {
@@ -122,7 +153,12 @@ export class AppartementService {
       });
     }
 
-    return new AppartementDto(await this.findOneOrFail(id));
+    // Si les loyers viennent de repasser en automatique, on les remplit tout de
+    // suite plutôt qu'à la prochaine lecture.
+    const misAJour = await this.findOneOrFail(id);
+    await this.applyLatestRentRef(misAJour);
+
+    return new AppartementDto(misAJour);
   }
 
   /** Accepte un nombre ou une saisie texte (« 10,7 ») ; vide → null. */
@@ -167,8 +203,15 @@ export class AppartementService {
       );
     }
 
-    await this.appliquerModifications(id, this.champRentRef(rentRefDto));
+    // Même règle que l'IRL : une saisie non vide fige les loyers, une valeur
+    // vide les rebascule en automatique.
+    const manuel = rentRefDto.value != null;
+    await this.appliquerModifications(id, {
+      ...this.champRentRef(rentRefDto),
+      rentRefManual: manuel,
+    });
     await this.syncFilatureGroup(id, rentRefDto);
+    await this.syncManuelFilature(id, manuel);
 
     return new AppartementDto(await this.findOneOrFail(id));
   }
@@ -217,6 +260,81 @@ export class AppartementService {
       valIrl: latestIrl.valIrl,
       tIrl: latestIrl.tIrl,
     });
+  }
+
+  /**
+   * Remplit rentRef/rentRefMaj avec les loyers de l'encadrement des loyers tant
+   * qu'ils n'ont pas été saisis à la main (`rentRefManual`). Persiste la mise à
+   * jour le cas échéant ; si l'API est injoignable, la valeur en base est
+   * conservée.
+   */
+  private async applyLatestRentRef(appartement: Appartement): Promise<void> {
+    if (appartement.rentRefManual) {
+      return;
+    }
+
+    const loyers = await this.encadrementLoyersService.getLoyersReference(
+      appartement.adress,
+      appartement.constructionPeriod ?? null,
+    );
+
+    if (
+      loyers === null ||
+      (appartement.rentRef === loyers.rentRef &&
+        appartement.rentRefMaj === loyers.rentRefMaj)
+    ) {
+      return;
+    }
+
+    appartement.rentRef = loyers.rentRef;
+    appartement.rentRefMaj = loyers.rentRefMaj;
+
+    await this.appartementRepository.update(appartement.id, {
+      rentRef: loyers.rentRef,
+      rentRefMaj: loyers.rentRefMaj,
+    });
+  }
+
+  /**
+   * @returns `true` si l'un des loyers soumis diffère de la valeur stockée,
+   * `false` si l'un a été vidé (retour à l'automatique), `undefined` si rien
+   * n'a changé.
+   */
+  private rentRefManuel(
+    existant: Appartement,
+    modifications: Partial<Appartement>,
+  ): boolean | undefined {
+    let vide = false;
+
+    for (const champ of ['rentRef', 'rentRefMaj'] as const) {
+      const soumis = modifications[champ];
+      if (soumis === undefined) {
+        continue;
+      }
+      if (soumis === null) {
+        vide = true;
+      } else if (soumis !== existant[champ]) {
+        return true;
+      }
+    }
+
+    return vide ? false : undefined;
+  }
+
+  /** Les logements d'une même résidence partagent le mode manuel/automatique. */
+  private async syncManuelFilature(
+    courantId: number,
+    manuel: boolean,
+  ): Promise<void> {
+    if (!GROUPE_FILATURE.includes(courantId)) {
+      return;
+    }
+
+    const cibleId = GROUPE_FILATURE.find((id) => id !== courantId);
+
+    if (cibleId !== undefined) {
+      await this.appliquerModifications(cibleId, { rentRefManual: manuel });
+    }
   }
 
   /**

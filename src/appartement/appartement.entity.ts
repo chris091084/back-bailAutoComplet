@@ -129,6 +129,14 @@ export class Appartement {
   })
   rentRefMaj!: number | null;
 
+  /**
+   * `true` lorsque les loyers de référence ont été saisis à la main : dans ce
+   * cas les lectures ne les remplacent pas par ceux de l'encadrement des loyers
+   * de la Métropole de Lyon.
+   */
+  @Column({ name: 'rent_ref_manual', type: 'boolean', default: false })
+  rentRefManual!: boolean;
+
   @Column({ name: 'val_irl', type: 'varchar', length: 255, nullable: true })
   valIrl!: string | null;
 

@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
+import { EncadrementLoyersService } from '../encadrement-loyers/encadrement-loyers.service';
 import { IrlService } from '../irl/irl.service';
 import { Appartement } from './appartement.entity';
 import { AppartementService } from './appartement.service';
@@ -15,6 +16,8 @@ const unAppartement = (surcharges: Partial<Appartement> = {}): Appartement =>
     chambres: [],
     caracteristiques: [],
     irlManual: false,
+    rentRefManual: false,
+    constructionPeriod: '1968',
     valIrl: null,
     tIrl: null,
     rentRef: null,
@@ -52,14 +55,21 @@ const creerRepositoryMock = (): RepositoryMock => {
 describe('AppartementService', () => {
   let repository: RepositoryMock;
   let irlService: jest.Mocked<Pick<IrlService, 'getLatestIrl'>>;
+  let encadrementLoyers: jest.Mocked<
+    Pick<EncadrementLoyersService, 'getLoyersReference'>
+  >;
   let service: AppartementService;
 
   beforeEach(() => {
     repository = creerRepositoryMock();
     irlService = { getLatestIrl: jest.fn().mockResolvedValue(null) };
+    encadrementLoyers = {
+      getLoyersReference: jest.fn().mockResolvedValue(null),
+    };
     service = new AppartementService(
       repository as unknown as Repository<Appartement>,
       irlService as unknown as IrlService,
+      encadrementLoyers as unknown as EncadrementLoyersService,
     );
   });
 
@@ -154,7 +164,10 @@ describe('AppartementService', () => {
         value: 11.3,
       });
 
-      expect(repository.update).toHaveBeenCalledWith(2, { rentRef: 11.3 });
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 11.3,
+        rentRefManual: true,
+      });
     });
 
     it('alimente rentRefMaj quand le champ visé est rentRefMaj', async () => {
@@ -164,7 +177,10 @@ describe('AppartementService', () => {
         value: 13.6,
       });
 
-      expect(repository.update).toHaveBeenCalledWith(2, { rentRefMaj: 13.6 });
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRefMaj: 13.6,
+        rentRefManual: true,
+      });
     });
 
     it('bascule sur rentRefMaj lorsqu’un rentRef est envoyé à null (comportement Java)', async () => {
@@ -174,7 +190,10 @@ describe('AppartementService', () => {
         value: null,
       });
 
-      expect(repository.update).toHaveBeenCalledWith(2, { rentRefMaj: null });
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRefMaj: null,
+        rentRefManual: false,
+      });
     });
 
     it('ne passe jamais par save(), qui casserait les relations chargées', async () => {
@@ -203,7 +222,9 @@ describe('AppartementService', () => {
   describe('synchronisation du groupe Filature (appartements 1 et 4)', () => {
     it("répercute la valeur de l'appartement 1 sur l'appartement 4", async () => {
       repository.findOne.mockResolvedValue(unAppartement({ id: 1 }));
-      repository.findOneBy.mockResolvedValue(unAppartement({ id: 4, rentRef: 9 }));
+      repository.findOneBy.mockResolvedValue(
+        unAppartement({ id: 4, rentRef: 9 }),
+      );
 
       await service.setRentRefAndRentRefMaj({
         idAppartement: 1,
@@ -254,8 +275,12 @@ describe('AppartementService', () => {
         value: 10.7,
       });
 
-      // Une seule écriture : celle de l'appartement courant.
-      expect(repository.update).toHaveBeenCalledTimes(1);
+      // La valeur n'est pas réécrite sur l'appartement 4 : seul son mode
+      // manuel est aligné.
+      expect(repository.update).not.toHaveBeenCalledWith(4, { rentRef: 10.7 });
+      expect(repository.update).toHaveBeenCalledWith(4, {
+        rentRefManual: true,
+      });
     });
   });
 
@@ -276,6 +301,104 @@ describe('AppartementService', () => {
       expect(repository.update).toHaveBeenCalledWith(2, {
         rentRef: 10.7,
         rentRefMaj: 12.8,
+        rentRefManual: true,
+      });
+    });
+
+    it('ne fige pas les loyers quand la modale renvoie les valeurs inchangées', async () => {
+      repository.findOne.mockResolvedValue(
+        unAppartement({ id: 2, rentRef: 11.3, rentRefMaj: 13.6 }),
+      );
+
+      await service.updateAppartement(2, { rentRef: 11.3, rentRefMaj: 13.6 });
+
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+      });
+    });
+
+    it('rebascule en automatique et remplit tout de suite quand un loyer est vidé', async () => {
+      repository.findOne.mockResolvedValue(
+        unAppartement({
+          id: 2,
+          rentRef: 9,
+          rentRefMaj: 10,
+          rentRefManual: true,
+        }),
+      );
+      encadrementLoyers.getLoyersReference.mockResolvedValue({
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+      });
+
+      await service.updateAppartement(2, {
+        rentRef: '' as unknown as number,
+        rentRefMaj: 10,
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: null,
+        rentRefMaj: 10,
+        rentRefManual: false,
+      });
+    });
+
+    it('passe en manuel quand le front le demande, même sans valeur modifiée', async () => {
+      repository.findOne.mockResolvedValue(
+        unAppartement({ id: 2, rentRef: 11.3, rentRefMaj: 13.6 }),
+      );
+
+      await service.updateAppartement(2, {
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+        rentRefManual: true,
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+        rentRefManual: true,
+      });
+    });
+
+    it('repasse en automatique sans écrire les valeurs reçues, puis remplit', async () => {
+      // Avant l'écriture le logement est manuel, après elle il ne l'est plus.
+      repository.findOne
+        .mockResolvedValueOnce(
+          unAppartement({
+            id: 2,
+            rentRef: 9,
+            rentRefMaj: 10,
+            rentRefManual: true,
+          }),
+        )
+        .mockResolvedValueOnce(
+          unAppartement({
+            id: 2,
+            rentRef: 9,
+            rentRefMaj: 10,
+            rentRefManual: false,
+          }),
+        );
+      encadrementLoyers.getLoyersReference.mockResolvedValue({
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+      });
+
+      const dto = await service.updateAppartement(2, {
+        rentRef: 9,
+        rentRefMaj: 10,
+        rentRefManual: false,
+      });
+
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRefManual: false,
+      });
+      expect(dto.rentRef).toBe(11.3);
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
       });
     });
 
@@ -285,6 +408,76 @@ describe('AppartementService', () => {
       await expect(
         service.updateAppartement(2, { rentRef: 'abc' as unknown as number }),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('remplissage automatique des loyers de référence', () => {
+    const loyers = { rentRef: 11.3, rentRefMaj: 13.6 };
+
+    it('remplit les loyers avec ceux de l’encadrement et persiste', async () => {
+      repository.find.mockResolvedValue([unAppartement({ id: 2 })]);
+      encadrementLoyers.getLoyersReference.mockResolvedValue(loyers);
+
+      const [dto] = await service.getAllAppartement();
+
+      expect(encadrementLoyers.getLoyersReference).toHaveBeenCalledWith(
+        '56 rue de la Filature',
+        '1968',
+      );
+      expect(dto.rentRef).toBe(11.3);
+      expect(dto.rentRefMaj).toBe(13.6);
+      expect(repository.update).toHaveBeenCalledWith(2, {
+        rentRef: 11.3,
+        rentRefMaj: 13.6,
+      });
+    });
+
+    it('ne touche pas aux loyers saisis à la main', async () => {
+      repository.find.mockResolvedValue([
+        unAppartement({
+          rentRefManual: true,
+          rentRef: 9,
+          rentRefMaj: 10,
+        }),
+      ]);
+      encadrementLoyers.getLoyersReference.mockResolvedValue(loyers);
+
+      const [dto] = await service.getAllAppartement();
+
+      expect(encadrementLoyers.getLoyersReference).not.toHaveBeenCalled();
+      expect(dto.rentRef).toBe(9);
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('conserve la valeur en base quand l’API ne répond pas', async () => {
+      repository.find.mockResolvedValue([
+        unAppartement({ rentRef: 10.7, rentRefMaj: 12.8 }),
+      ]);
+
+      const [dto] = await service.getAllAppartement();
+
+      expect(dto.rentRef).toBe(10.7);
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('n’écrit pas quand les valeurs sont déjà à jour', async () => {
+      repository.find.mockResolvedValue([
+        unAppartement({ rentRef: 11.3, rentRefMaj: 13.6 }),
+      ]);
+      encadrementLoyers.getLoyersReference.mockResolvedValue(loyers);
+
+      await service.getAllAppartement();
+
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('s’applique aussi à la lecture d’un seul appartement', async () => {
+      repository.findOne.mockResolvedValue(unAppartement({ id: 2 }));
+      encadrementLoyers.getLoyersReference.mockResolvedValue(loyers);
+
+      const dto = await service.getAppartementById(2);
+
+      expect(dto.rentRefMaj).toBe(13.6);
     });
   });
 
