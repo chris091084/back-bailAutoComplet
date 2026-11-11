@@ -59,6 +59,7 @@ export class AppartementDto {
   petRule: string | null;
   rentRef: number | null;
   rentRefMaj: number | null;
+  rentRefManual: boolean;
   valIrl: string | null;
   tIrl: string | null;
   irlManual: boolean;
@@ -96,6 +97,7 @@ export class AppartementDto {
     this.petRule = appartement.petRule;
     this.rentRef = appartement.rentRef;
     this.rentRefMaj = appartement.rentRefMaj;
+    this.rentRefManual = appartement.rentRefManual;
     this.valIrl = appartement.valIrl;
     this.tIrl = appartement.tIrl;
     this.irlManual = appartement.irlManual;
